@@ -1,1 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Export Attendance to CSV</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8f9fa;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 50px;
+    }
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <h2>Export Attendance Data</h2>
+  <button onclick="exportAttendance()">Download CSV</button>
 
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDt-pibaL2pMEu19Qgbcl4ir68W8lfqti8",
+      authDomain: "attendance-d7de7.firebaseapp.com",
+      databaseURL: "https://attendance-d7de7-default-rtdb.firebaseio.com",
+      projectId: "attendance-d7de7",
+      storageBucket: "attendance-d7de7.appspot.com",
+      messagingSenderId: "470494624998",
+      appId: "1:470494624998:web:be5b5bdfb9b515d079cf27"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    function exportAttendance() {
+      const ref = database.ref("attendanceRecords");
+      ref.once("value", snapshot => {
+        const data = snapshot.val();
+        if (!data) {
+          alert("No attendance data found.");
+          return;
+        }
+
+        // Convert to CSV
+        const csvRows = [["Name", "Status", "Reason", "Timestamp"]];
+
+        for (const key in data) {
+          const record = data[key];
+          csvRows.push([
+            `"${record.name || ""}"`,
+            `"${record.status || ""}"`,
+            `"${record.reason || ""}"`,
+            `"${record.timestamp || ""}"`
+          ]);
+        }
+
+        const csvContent = csvRows.map(row => row.join(",")).join("\n");
+
+        // Download CSV
+        const blob = new Blob([csvContent], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "attendance_records.csv";
+        link.click();
+        URL.revokeObjectURL(url);
+      });
+    }
+  </script>
+</body>
+</html>
