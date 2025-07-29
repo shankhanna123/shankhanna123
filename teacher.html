@@ -6,142 +6,203 @@
   <title>Teacher Dashboard</title>
   <style>
     body {
-      margin: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f3f6fb;
+      margin: 0;
+      padding: 0;
+      background: #f0f4f8;
     }
 
-    .container {
-      max-width: 960px;
-      margin: 40px auto;
+    header {
+      background-color: #4c51bf;
+      color: white;
       padding: 20px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    main {
+      padding: 20px;
+    }
+
+    .section {
+      background-color: white;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     }
 
     h2 {
-      text-align: center;
-      margin-bottom: 30px;
-      color: #333;
+      margin-top: 0;
+      color: #4c51bf;
     }
 
-    .btn {
-      display: inline-block;
-      background-color: #28a745;
+    button {
+      background-color: #4c51bf;
       color: white;
-      padding: 12px 24px;
       border: none;
+      padding: 10px 16px;
       border-radius: 8px;
-      font-size: 16px;
       cursor: pointer;
-      margin-bottom: 20px;
-      transition: background 0.3s ease;
+      font-size: 14px;
+      margin-top: 10px;
     }
 
-    .btn:hover {
-      background-color: #218838;
+    button:hover {
+      background-color: #3730a3;
     }
 
-    #generatedCode {
-      font-size: 20px;
-      color: #007bff;
+    .code-box {
+      margin-top: 10px;
+      font-size: 24px;
       font-weight: bold;
-      margin: 15px 0;
+      color: #2d3748;
     }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      background-color: #fff;
+    ul {
+      list-style-type: none;
+      padding: 0;
     }
 
-    th, td {
-      padding: 12px;
-      text-align: center;
-      border-bottom: 1px solid #ddd;
-    }
-
-    th {
-      background-color: #007bff;
-      color: white;
-    }
-
-    tr:hover {
-      background-color: #f1f1f1;
-    }
-
-    .section-title {
-      margin-top: 40px;
-      font-size: 20px;
-      color: #444;
-      border-bottom: 2px solid #007bff;
-      display: inline-block;
-      padding-bottom: 4px;
-    }
-
-    @media (max-width: 768px) {
-      .btn {
-        width: 100%;
-      }
-
-      table {
-        font-size: 14px;
-      }
+    li {
+      background-color: #edf2f7;
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 6px;
     }
   </style>
 </head>
 <body>
+  <header>
+    <h1>Teacher Dashboard</h1>
+    <p id="teacherEmail">Loading teacher...</p>
+  </header>
 
-  <div class="container">
-    <h2>Teacher Dashboard</h2>
+  <main>
+    <div class="section">
+      <h2>Subjects</h2>
+      <ul id="subjectList">
+        <!-- Subjects from Firebase -->
+      </ul>
+    </div>
 
-    <button class="btn" onclick="generateAttendanceCode()">Generate Attendance Code</button>
-    <div id="generatedCode">Code: ----</div>
+    <div class="section">
+      <h2>Registered Students</h2>
+      <ul id="studentList">
+        <!-- Student names -->
+      </ul>
+    </div>
 
-    <div class="section-title">Subjects</div>
-    <ul id="subjectsList">
-      <!-- Dynamically insert subject list from Firebase -->
-    </ul>
+    <div class="section">
+      <h2>Generate Attendance Code</h2>
+      <button onclick="generateAttendanceCode()">Generate Code</button>
+      <div class="code-box" id="attendanceCode">Code: -</div>
+    </div>
 
-    <div class="section-title">Registered Students</div>
-    <table>
-      <thead>
-        <tr>
-          <th>Student Name</th>
-          <th>Email</th>
-          <th>Attendance Status</th>
-        </tr>
-      </thead>
-      <tbody id="studentTableBody">
-        <!-- Student data will appear here -->
-      </tbody>
-    </table>
-  </div>
+    <div class="section">
+      <h2>Attendance Tracker</h2>
+      <ul id="attendanceList">
+        <!-- Attendance from Firebase -->
+      </ul>
+    </div>
+  </main>
 
-  <!-- ✅ Firebase + Script -->
+  <!-- Firebase SDK and app config -->
   <script type="module">
-    // Import Firebase from your own firebase.js file
-    import { db } from './firebase.js';
-    import { ref, set, get, child } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+    import { auth, db } from './firebase.js';
+    import {
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
+    import {
+      ref,
+      set,
+      get,
+      child,
+      onValue
+    } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
 
-    const codeDisplay = document.getElementById("generatedCode");
+    const teacherEmailEl = document.getElementById("teacherEmail");
+    const subjectList = document.getElementById("subjectList");
+    const studentList = document.getElementById("studentList");
+    const attendanceList = document.getElementById("attendanceList");
+    const attendanceCodeBox = document.getElementById("attendanceCode");
+
+    let currentTeacherUID = "";
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        teacherEmailEl.textContent = "Logged in as: " + user.email;
+        currentTeacherUID = user.uid;
+        loadSubjects();
+        loadStudents();
+        loadAttendance();
+      } else {
+        alert("Not logged in. Redirecting...");
+        window.location.href = "login.html";
+      }
+    });
 
     function generateAttendanceCode() {
-      const code = Math.floor(100000 + Math.random() * 900000).toString();
-      codeDisplay.textContent = `Code: ${code}`;
+      const code = Math.floor(1000 + Math.random() * 9000); // 4-digit code
+      attendanceCodeBox.textContent = "Code: " + code;
 
-      // Upload to Firebase
-      const codeRef = ref(db, 'attendanceCodes/currentCode');
+      const codeRef = ref(db, `attendanceCodes/${currentTeacherUID}`);
       set(codeRef, {
         code: code,
-        timestamp: new Date().toISOString()
+        timestamp: Date.now()
       });
     }
 
-    // Populate subjects and students (add your logic as needed)
-  </script>
+    function loadSubjects() {
+      const subRef = ref(db, `teachers/${currentTeacherUID}/subjects`);
+      onValue(subRef, (snapshot) => {
+        subjectList.innerHTML = "";
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          Object.values(data).forEach((subject) => {
+            const li = document.createElement("li");
+            li.textContent = subject;
+            subjectList.appendChild(li);
+          });
+        } else {
+          subjectList.innerHTML = "<li>No subjects found</li>";
+        }
+      });
+    }
 
+    function loadStudents() {
+      const studentRef = ref(db, `teachers/${currentTeacherUID}/students`);
+      onValue(studentRef, (snapshot) => {
+        studentList.innerHTML = "";
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          Object.values(data).forEach((student) => {
+            const li = document.createElement("li");
+            li.textContent = student.name || student.email || "Unnamed student";
+            studentList.appendChild(li);
+          });
+        } else {
+          studentList.innerHTML = "<li>No registered students</li>";
+        }
+      });
+    }
+
+    function loadAttendance() {
+      const attRef = ref(db, `attendance/${currentTeacherUID}`);
+      onValue(attRef, (snapshot) => {
+        attendanceList.innerHTML = "";
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          Object.entries(data).forEach(([studentEmail, record]) => {
+            const li = document.createElement("li");
+            li.textContent = `${studentEmail} → ${record.status || 'unknown'} @ ${new Date(record.timestamp).toLocaleString()}`;
+            attendanceList.appendChild(li);
+          });
+        } else {
+          attendanceList.innerHTML = "<li>No attendance records yet</li>";
+        }
+      });
+    }
+  </script>
 </body>
 </html>
