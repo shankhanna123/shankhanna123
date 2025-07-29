@@ -1,87 +1,143 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Student Attendance</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Student Dashboard</title>
   <style>
-    body { font-family: Arial; text-align: center; background: #f4f4f4; padding: 40px; }
-    .box { background: white; padding: 30px; border-radius: 10px; max-width: 300px; margin: auto; box-shadow: 0 0 10px #ccc; }
-    input, button { width: 100%; padding: 10px; margin-top: 10px; }
-    .timer { font-weight: bold; margin-top: 10px; color: red; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f2f5;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background-color: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      width: 350px;
+      text-align: center;
+    }
+    h2 {
+      color: #333;
+    }
+    .welcome {
+      font-size: 18px;
+      margin-bottom: 20px;
+      font-weight: 500;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
+      border: none;
+      background-color: #007bff;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .timer {
+      margin-top: 20px;
+      font-size: 16px;
+      color: red;
+      font-weight: bold;
+    }
   </style>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-  <script src="firebaseConfig.js"></script>
 </head>
 <body>
-  <div class="box">
-    <h2>Submit Attendance</h2>
-    <input id="studentName" placeholder="Your Name" />
-    <input id="codeInput" placeholder="Enter Code" />
-    <button id="submitBtn">Submit</button>
+
+  <div class="container">
+    <h2>Student Dashboard</h2>
+    <div class="welcome" id="studentNameDisplay">Welcome, Student!</div>
+
+    <form id="attendanceForm">
+      <input type="text" id="attendanceCode" placeholder="Enter Attendance Code" required />
+      <button type="submit">Submit Attendance</button>
+    </form>
+
     <div class="timer" id="timer">Time left: 60s</div>
-    <div id="status"></div>
   </div>
 
-  <script>
-    let correctCode = "";
+  <script type="module">
+    import { auth, db } from './firebase.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { set, ref, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const studentNameDisplay = document.getElementById("studentNameDisplay");
+    const attendanceForm = document.getElementById("attendanceForm");
+    const attendanceCodeInput = document.getElementById("attendanceCode");
+    const timerDisplay = document.getElementById("timer");
+
+    let studentUID = null;
+    let studentName = "Student";
+
+    // Get student name from Firebase
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        studentUID = user.uid;
+        const snapshot = await get(ref(db, `students/${studentUID}`));
+        if (snapshot.exists()) {
+          studentName = snapshot.val().name || "Student";
+          studentNameDisplay.textContent = `Welcome, ${studentName}`;
+        } else {
+          studentNameDisplay.textContent = "Welcome, Student";
+        }
+      } else {
+        window.location.href = "student-login.html";
+      }
+    });
+
+    // Timer countdown
     let timeLeft = 60;
-    let timerInterval;
-
-    const codeRef = db.ref("attendanceCodes/currentCode");
-    const startTimeRef = db.ref("attendanceCodes/startTime");
-
-    function startTimer(startTimestamp) {
-      const now = Date.now();
-      const timeElapsed = Math.floor((now - startTimestamp) / 1000);
-      timeLeft = 60 - timeElapsed;
-
+    const timerInterval = setInterval(() => {
+      timeLeft--;
+      timerDisplay.textContent = `Time left: ${timeLeft}s`;
       if (timeLeft <= 0) {
-        document.getElementById("timer").innerText = "Code Expired!";
-        document.getElementById("submitBtn").disabled = true;
+        clearInterval(timerInterval);
+        timerDisplay.textContent = "Time expired!";
+        attendanceForm.querySelector("button").disabled = true;
+      }
+    }, 1000);
+
+    // Submit attendance
+    attendanceForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const code = attendanceCodeInput.value.trim();
+      if (!code) return alert("Enter attendance code");
+
+      const codeSnapshot = await get(ref(db, `codes/${code}`));
+      if (!codeSnapshot.exists()) {
+        alert("Invalid or expired code");
         return;
       }
 
-      timerInterval = setInterval(() => {
-        timeLeft--;
-        document.getElementById("timer").innerText = `Time left: ${timeLeft}s`;
-        if (timeLeft <= 0) {
-          clearInterval(timerInterval);
-          markAttendance("Absent", "Timeout");
-          document.getElementById("submitBtn").disabled = true;
-        }
-      }, 1000);
-    }
+      const subject = codeSnapshot.val().subject || "Unknown";
+      const timestamp = new Date().toISOString();
 
-    startTimeRef.on("value", snap => {
-      const startTimestamp = snap.val();
-      if (startTimestamp) startTimer(startTimestamp);
-    });
-
-    codeRef.on("value", snap => correctCode = snap.val());
-
-    document.getElementById("submitBtn").onclick = function () {
-      clearInterval(timerInterval);
-      const name = document.getElementById("studentName").value.trim();
-      const enteredCode = document.getElementById("codeInput").value.trim();
-
-      if (!name) return alert("Enter your name!");
-      if (enteredCode === correctCode) {
-        markAttendance("Present");
-      } else {
-        markAttendance("Absent", "Incorrect Code");
-      }
-
-      this.disabled = true;
-    };
-
-    function markAttendance(status, reason = "") {
-      const name = document.getElementById("studentName").value.trim();
-      db.ref("attendanceRecords/" + name).set({
-        name, status, reason, timestamp: new Date().toISOString()
+      await set(ref(db, `attendance/${subject}/${studentUID}`), {
+        name: studentName,
+        time: timestamp
       });
-      document.getElementById("status").innerText = `Attendance: ${status}`;
-    }
+
+      alert("Attendance submitted successfully!");
+      attendanceForm.reset();
+    });
   </script>
 </body>
 </html>
