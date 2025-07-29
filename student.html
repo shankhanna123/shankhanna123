@@ -1,87 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Student Attendance</title>
+  <meta charset="UTF-8">
+  <title>Student Panel</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      padding: 20px;
-      max-width: 400px;
-      margin: auto;
+      background-color: #f2f2f2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px;
     }
-    h2 {
+
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      width: 300px;
       text-align: center;
     }
-    input, button {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      font-size: 16px;
+
+    h2 {
+      color: #333;
     }
+
+    input {
+      padding: 10px;
+      width: 80%;
+      margin: 15px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
     button {
-      background-color: #4CAF50;
+      padding: 10px 20px;
+      background-color: #0066cc;
       color: white;
       border: none;
+      border-radius: 8px;
+      font-size: 16px;
       cursor: pointer;
     }
+
     button:hover {
-      background-color: #45a049;
+      background-color: #004999;
+    }
+
+    .status {
+      margin-top: 20px;
+      font-size: 14px;
+      color: green;
     }
   </style>
 </head>
 <body>
-  <h2>Mark Your Attendance</h2>
-  <input type="text" id="studentName" placeholder="Enter your name" required />
-  <input type="text" id="attendanceCode" placeholder="Enter attendance code" required />
-  <button onclick="submitAttendance()">Submit</button>
+  <div class="container">
+    <h2>Student Panel</h2>
+    <input type="text" id="studentName" placeholder="Enter your name" />
+    <input type="text" id="attendanceCode" placeholder="Enter code" />
+    <button onclick="submitAttendance()">Submit</button>
+    <div class="status" id="statusMessage"></div>
+  </div>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+  <!-- Firebase SDKs via compat (safe) version -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
   <script>
-    // ✅ Replace with your actual Firebase config
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyDt-pibaL2pMEu19Qgbcl4ir68W8lfqti8",
       authDomain: "attendance-d7de7.firebaseapp.com",
-      databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
       projectId: "attendance-d7de7",
-      storageBucket: "attendance-d7de7.firebasestorage.app",
+      storageBucket: "attendance-d7de7.appspot.com",
       messagingSenderId: "470494624998",
-      appId: "1:470494624998:web:be5b5bdfb9b515d079cf27",
-      measurementId: "G-VML3R5N55W"
-    };
-
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
-
-    // Submit attendance
-    function submitAttendance() {
-      const name = document.getElementById("studentName").value.trim();
-      const code = document.getElementById("attendanceCode").value.trim();
-
-      if (!name || !code) {
-        alert("Please enter both name and attendance code.");
-        return;
-      }
-
-      const timestamp = new Date().toISOString();
-
-      // Save attendance in Firebase
-      db.ref(`attendance/${code}/${name}`).set({
-        timestamp: timestamp
-      }).then(() => {
-        alert("✅ Attendance recorded successfully!");
-        document.getElementById("studentName").value = "";
-        document.getElementById("attendanceCode").value = "";
-      }).catch((error) => {
-        console.error("❌ Error saving attendance:", error);
-        alert("Something went wrong. Try again later.");
-      });
-    }
-  </script>
-</body>
-</html>
+      appId: "1:470494624998:web:be5b5bdfb9b515d079cf27"
