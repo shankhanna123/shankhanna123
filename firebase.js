@@ -1,11 +1,25 @@
+// firebase.js
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+import { getDatabase } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+
+// Your Firebase config (replace with your actual config)
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT.firebaseio.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "ID",
-  appId: "APP_ID"
+  apiKey: "AIzaSyDt-pibaL2pMEu19Qgbcl4ir68W8lfqti8",
+  authDomain: "attendance-d7de7.firebaseapp.com",
+  databaseURL: "https://attendance-d7de7-default-rtdb.firebaseio.com",
+  projectId: "attendance-d7de7",
+  storageBucket: "attendance-d7de7.appspot.com",
+  messagingSenderId: "470494624998",
+  appId: "1:470494624998:web:be5b5bdfb9b515d079cf27"
 };
-firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
+
+// Initialize Firebase app
+const app = initializeApp(firebaseConfig);
+
+// Initialize services
+const database = getDatabase(app);
+const auth = getAuth(app);
+
+// Export them to use in other files
+export { app, database, auth };
