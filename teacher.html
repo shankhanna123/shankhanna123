@@ -1,77 +1,101 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Teacher Attendance Panel</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 40px;
-      text-align: center;
-    }
-    #generateCode {
-      padding: 10px 20px;
-      font-size: 18px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      cursor: pointer;
-      border-radius: 5px;
-    }
-    #generateCode:hover {
-      background-color: #0056b3;
-    }
-    #codeDisplay {
-      margin-top: 20px;
-      font-size: 24px;
-      font-weight: bold;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard</title>
+    <style>
+        /* Add some basic styling here if you like */
+        body {
+            font-family: sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+        }
+        #codeDisplay {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+        #generatedCode {
+            font-weight: bold;
+            color: #007bff; /* Example color */
+        }
+    </style>
 </head>
 <body>
 
-  <h1>Teacher Dashboard</h1>
-  <button id="generateCode">Generate Code</button>
-  <p id="codeDisplay"></p>
+    <h2>Attendance Code Generator</h2>
 
-  <!-- Firebase v8 JS SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <!-- The button that calls the generateCode function -->
+    <button onclick="generateCode()">Generate Code</button>
 
-  <script>
-    // Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyDt-pibaL2pMEu19Qgbcl4ir68W8lfqti8",
-      authDomain: "attendance-d7de7.firebaseapp.com",
-      databaseURL: "https://attendance-d7de7-default-rtdb.firebaseio.com",
-      projectId: "attendance-d7de7",
-      storageBucket: "attendance-d7de7.appspot.com",
-      messagingSenderId: "470494624998",
-      appId: "1:470494624998:web:be5b5bdfb9b515d079cf27"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
-  </script>
+    <!-- Area to display the generated code -->
+    <div id="codeDisplay">
+        <p>Generated Code:</p>
+        <span id="generatedCode">Waiting for code...</span>
+    </div>
 
-  <!-- Custom Script -->
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const generateBtn = document.getElementById("generateCode");
-      const codeDisplay = document.getElementById("codeDisplay");
+    <!--
+        Include Firebase SDKs.
+        Ensure these paths are correct and in the correct order (app before database).
+        Using compat versions for simplicity with the previous syntax.
+    -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <!-- If you are using Analytics, uncomment the line below -->
+    <!-- <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-analytics-compat.js"></script> -->
 
-      generateBtn.addEventListener("click", () => {
-        const code = Math.floor(100000 + Math.random() * 900000); // 6-digit code
-        codeDisplay.textContent = "Generated Code: " + code;
 
-        // Save to Firebase
-        database.ref("currentCode").set({
-          code: code,
-          timestamp: new Date().toISOString()
-        });
-      });
-    });
-  </script>
+    <!-- Your custom JavaScript code -->
+    <script>
+        // ✅ Replace this with your actual Firebase config from your Firebase project settings
+        const firebaseConfig = {
+  apiKey: "AIzaSyDt-pibaL2pMEu19Qgbcl4ir68W8lfqti8",
+  authDomain: "attendance-d7de7.firebaseapp.com",
+  projectId: "attendance-d7de7",
+  storageBucket: "attendance-d7de7.firebasestorage.app",
+  messagingSenderId: "470494624998",
+  appId: "1:470494624998:web:be5b5bdfb9b515d079cf27",
+  measurementId: "G-VML3R5N55W"
+};
+
+        // Initialize Firebase App
+        const app = firebase.initializeApp(firebaseConfig);
+
+        // Initialize Firebase Database
+        // This makes the 'db' object available to interact with the database
+        const db = firebase.database();
+        const analytics = getAnalytics(app);
+        async function generateCode() {
+            try {
+                // Generate a random 6-digit code
+                const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+                // Get a reference to the 'codes' node in your database
+                const codeRef = db.ref('codes');
+
+                // Push the new code with a server timestamp
+                // Using push() creates a unique key for each code entry
+                await codeRef.push({
+                    code: code,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP // Use server timestamp for accuracy
+                });
+
+                // Display the generated code on the page
+                document.getElementById('generatedCode').textContent = code;
+                console.log("Code generated and saved:", code);
+
+            } catch (error) {
+                console.error("Error generating or saving code:", error);
+                alert("Error generating code. Please check the browser console for details.");
+            }
+        }
+
+        // You can add other JavaScript functions here,
+        // for example, functions to read codes, manage attendance, etc.
+
+    </script>
 
 </body>
 </html>
