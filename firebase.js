@@ -1,9 +1,9 @@
 // firebase.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-import { getDatabase } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getDatabase } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
-// Your Firebase config (replace with your actual config)
+// Replace with your actual Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyDt-pibaL2pMEu19Qgbcl4ir68W8lfqti8",
   authDomain: "attendance-d7de7.firebaseapp.com",
@@ -14,12 +14,10 @@ const firebaseConfig = {
   appId: "1:470494624998:web:be5b5bdfb9b515d079cf27"
 };
 
-// Initialize Firebase app
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-
-// Initialize services
-const database = getDatabase(app);
 const auth = getAuth(app);
+const db = getDatabase(app);
 
-// Export them to use in other files
-export { app, database, auth };
+// ✅ Correctly export both
+export { auth, db };
