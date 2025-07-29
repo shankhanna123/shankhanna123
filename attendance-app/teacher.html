@@ -1,17 +1,79 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Teacher Panel</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Teacher Attendance Code Generator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 400px;
+      margin: auto;
+    }
+    h2 {
+      text-align: center;
+    }
+    #codeDisplay {
+      font-size: 24px;
+      text-align: center;
+      margin: 20px 0;
+      font-weight: bold;
+      color: green;
+    }
+    button {
+      width: 100%;
+      padding: 15px;
+      background-color: #2196F3;
+      color: white;
+      font-size: 18px;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #1976D2;
+    }
+  </style>
 </head>
 <body>
-  <h2>Generate Attendance Code</h2>
-  <input type="text" id="subject" placeholder="Subject Name">
+  <h2>Teacher - Generate Attendance Code</h2>
   <button onclick="generateCode()">Generate Code</button>
-  <p id="generatedCode"></p>
+  <div id="codeDisplay"></div>
 
-  <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js"></script>
-  <script src="firebase-config.js"></script>
-  <script src="teacher.js"></script>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+
+  <script>
+    // ✅ Replace this with your actual Firebase config
+    const firebaseConfig = {
+  apiKey: "AIzaSyDt-pibaL2pMEu19Qgbcl4ir68W8lfqti8",
+  authDomain: "attendance-d7de7.firebaseapp.com",
+  projectId: "attendance-d7de7",
+  storageBucket: "attendance-d7de7.firebasestorage.app",
+  messagingSenderId: "470494624998",
+  appId: "1:470494624998:web:be5b5bdfb9b515d079cf27",
+  measurementId: "G-VML3R5N55W"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+    
+    function generateCode() {
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      const timestamp = new Date().toISOString();
+
+      // Store code in Firebase
+      db.ref('attendance_codes/' + code).set({
+        createdAt: timestamp
+      }).then(() => {
+        document.getElementById("codeDisplay").innerText = "Code: " + code;
+      }).catch((error) => {
+        console.error("Error saving code:", error);
+        alert("❌ Failed to save code. Try again.");
+      });
+    }
+  </script>
 </body>
 </html>
