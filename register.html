@@ -3,77 +3,123 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Register | Attendance App</title>
+  <title>Register</title>
   <style>
     body {
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #4e54c8, #8f94fb);
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #667eea, #764ba2);
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
-      margin: 0;
     }
+
     .register-container {
-      background-color: white;
+      background-color: #ffffff;
       padding: 30px 40px;
       border-radius: 12px;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
       width: 100%;
       max-width: 400px;
     }
+
     .register-container h2 {
       text-align: center;
-      margin-bottom: 25px;
+      margin-bottom: 24px;
       color: #333;
     }
-    .register-container input,
-    .register-container select,
-    .register-container button {
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: bold;
+      color: #444;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"] {
       width: 100%;
       padding: 12px;
-      margin: 10px 0;
-      border: 1px solid #ddd;
+      border: 1px solid #ccc;
       border-radius: 8px;
       font-size: 16px;
     }
-    .register-container button {
-      background-color: #4e54c8;
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #667eea;
       color: white;
-      font-weight: bold;
+      font-size: 16px;
       border: none;
+      border-radius: 8px;
       cursor: pointer;
-      transition: background 0.3s;
+      transition: background-color 0.3s ease;
     }
-    .register-container button:hover {
-      background-color: #3e44a0;
+
+    button:hover {
+      background-color: #556cd6;
+    }
+
+    .login-link {
+      text-align: center;
+      margin-top: 15px;
+    }
+
+    .login-link a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .login-link a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
   <div class="register-container">
-    <h2>Create Account</h2>
-    <input type="email" id="email" placeholder="Email" required />
-    <input type="password" id="password" placeholder="Password" required />
-    <select id="role">
-      <option value="">Select Role</option>
-      <option value="teacher">Teacher</option>
-      <option value="student">Student</option>
-    </select>
+    <h2>Register</h2>
+
+    <div class="form-group">
+      <label for="name">Full Name</label>
+      <input type="text" id="name" placeholder="Enter your full name" required />
+    </div>
+
+    <div class="form-group">
+      <label for="email">Email Address</label>
+      <input type="email" id="email" placeholder="Enter your email" required />
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="Enter your password" required />
+    </div>
+
     <button onclick="registerUser()">Register</button>
+
+    <div class="login-link">
+      Already registered? <a href="login.html">Login here</a>
+    </div>
   </div>
 
   <script type="module">
     import { auth, db } from './firebase.js';
-    import { createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
-    import { ref, set } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js';
+    import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { set, ref } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-    async function registerUser() {
+    window.registerUser = async function () {
+      const name = document.getElementById("name").value.trim();
       const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value.trim();
-      const role = document.getElementById("role").value;
+      const password = document.getElementById("password").value;
 
-      if (!email || !password || !role) {
+      if (!name || !email || !password) {
         alert("Please fill in all fields.");
         return;
       }
@@ -82,26 +128,18 @@
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        const userData = {
-          uid: user.uid,
-          email: user.email,
-          role: role
-        };
-
-        const userRef = ref(db, role === "teacher" ? `teachers/${user.uid}` : `students/${user.uid}`);
-        await set(userRef, userData);
+        await set(ref(db, "users/" + user.uid), {
+          name: name,
+          email: email,
+          role: "student" // or change to "teacher" depending on registration type
+        });
 
         alert("Registration successful!");
-        // Optional redirect:
-        // window.location.href = "login.html";
+        window.location.href = "login.html";
       } catch (error) {
-        console.error("Error:", error.message);
-        alert("Registration failed: " + error.message);
+        alert("Error: " + error.message);
       }
     }
-
-    // Expose the function to the global scope
-    window.registerUser = registerUser;
   </script>
 </body>
 </html>
