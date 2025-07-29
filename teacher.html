@@ -1,50 +1,147 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Teacher Dashboard</title>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-  <script src="firebaseConfig.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f3f6fb;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 40px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #333;
+    }
+
+    .btn {
+      display: inline-block;
+      background-color: #28a745;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-bottom: 20px;
+      transition: background 0.3s ease;
+    }
+
+    .btn:hover {
+      background-color: #218838;
+    }
+
+    #generatedCode {
+      font-size: 20px;
+      color: #007bff;
+      font-weight: bold;
+      margin: 15px 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background-color: #fff;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #007bff;
+      color: white;
+    }
+
+    tr:hover {
+      background-color: #f1f1f1;
+    }
+
+    .section-title {
+      margin-top: 40px;
+      font-size: 20px;
+      color: #444;
+      border-bottom: 2px solid #007bff;
+      display: inline-block;
+      padding-bottom: 4px;
+    }
+
+    @media (max-width: 768px) {
+      .btn {
+        width: 100%;
+      }
+
+      table {
+        font-size: 14px;
+      }
+    }
+  </style>
 </head>
 <body>
-  <h2>Welcome Teacher</h2>
-  <input id="subject" placeholder="Enter Subject" />
-  <button onclick="createSubject()">Create Subject</button>
-  <button onclick="generateCode()">Generate Code</button>
-  <p>Generated Code: <span id="codeDisplay"></span></p>
-  <button onclick="exportCSV()">Export Attendance CSV</button>
-  <ul id="studentsList"></ul>
 
-  <script>
-    function createSubject() {
-      const sub = document.getElementById("subject").value.trim();
-      const uid = auth.currentUser.uid;
-      if (!sub) return alert("Enter a subject!");
-      db.ref("teachers/" + uid + "/subjects").push({ name: sub });
-    }
+  <div class="container">
+    <h2>Teacher Dashboard</h2>
 
-    function generateCode() {
-      const code = Math.floor(1000 + Math.random() * 9000).toString();
-      db.ref("attendanceCodes/currentCode").set(code);
-      db.ref("attendanceCodes/startTime").set(Date.now());
-      document.getElementById("codeDisplay").innerText = code;
-    }
+    <button class="btn" onclick="generateAttendanceCode()">Generate Attendance Code</button>
+    <div id="generatedCode">Code: ----</div>
 
-    function exportCSV() {
-      db.ref("attendanceRecords").once("value", snap => {
-        let csv = "Name,Status,Reason,Timestamp\n";
-        snap.forEach(child => {
-          const data = child.val();
-          csv += `${data.name},${data.status},${data.reason || ""},${data.timestamp}\n`;
-        });
-        const blob = new Blob([csv], { type: "text/csv" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "attendance.csv";
-        link.click();
+    <div class="section-title">Subjects</div>
+    <ul id="subjectsList">
+      <!-- Dynamically insert subject list from Firebase -->
+    </ul>
+
+    <div class="section-title">Registered Students</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Student Name</th>
+          <th>Email</th>
+          <th>Attendance Status</th>
+        </tr>
+      </thead>
+      <tbody id="studentTableBody">
+        <!-- Student data will appear here -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ✅ Firebase + Script -->
+  <script type="module">
+    // Import Firebase from your own firebase.js file
+    import { db } from './firebase.js';
+    import { ref, set, get, child } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+    const codeDisplay = document.getElementById("generatedCode");
+
+    function generateAttendanceCode() {
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      codeDisplay.textContent = `Code: ${code}`;
+
+      // Upload to Firebase
+      const codeRef = ref(db, 'attendanceCodes/currentCode');
+      set(codeRef, {
+        code: code,
+        timestamp: new Date().toISOString()
       });
     }
+
+    // Populate subjects and students (add your logic as needed)
   </script>
+
 </body>
 </html>
