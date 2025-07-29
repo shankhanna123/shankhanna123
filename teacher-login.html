@@ -1,0 +1,36 @@
+<!-- teacher-login.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Teacher Login</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h2>Teacher Login</h2>
+    <input type="email" id="teacherEmail" placeholder="Email" required><br>
+    <input type="password" id="teacherPassword" placeholder="Password" required><br>
+    <button onclick="loginTeacher()">Login</button>
+    <p id="loginMessage" style="color: red;"></p>
+  </div>
+
+  <script type="module">
+    import { auth } from './firebase.js';
+    import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    window.loginTeacher = function () {
+      const email = document.getElementById("teacherEmail").value;
+      const password = document.getElementById("teacherPassword").value;
+
+      signInWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          localStorage.setItem("teacherEmail", email); // Save for use in dashboard
+          window.location.href = "teacher.html";
+        })
+        .catch((error) => {
+          document.getElementById("loginMessage").innerText = "Invalid email or password.";
+        });
+    }
+  </script>
+</body>
+</html>
