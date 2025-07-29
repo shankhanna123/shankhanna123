@@ -50,7 +50,7 @@
     <h2>Enter Attendance Code</h2>
     <input type="text" id="studentName" placeholder="Enter your name" required />
     <input type="text" id="codeInput" placeholder="Enter code" required />
-    <button id="submitBtn" disabled>Submit</button>
+    <button id="submitBtn">Submit</button>
     <div class="timer" id="timer">Time left: 60s</div>
     <div id="status"></div>
   </div>
@@ -79,9 +79,18 @@
     let timer;
     let timeLeft = 60;
 
+    // Fetch code from Firebase (real-time)
+    database.ref("attendanceCodes/currentCode").on("value", snapshot => {
+      correctCode = snapshot.val();
+      console.log("Fetched code: " + correctCode);
+    });
+
     // Countdown Timer
     function startTimer() {
+      console.log("Timer started");
       const timerDisplay = document.getElementById("timer");
+      timerDisplay.textContent = `Time left: ${timeLeft}s`;
+
       timer = setInterval(() => {
         timeLeft--;
         timerDisplay.textContent = `Time left: ${timeLeft}s`;
@@ -115,34 +124,24 @@
         `Attendance marked: ${status}${reason ? " - " + reason : ""}`;
     }
 
-    // Fetch code from Firebase and enable submission
-    firebase.database().ref("attendanceCodes/currentCode").on("value", snapshot => {
-      correctCode = snapshot.val();
-      console.log("Fetched code:", correctCode);
-
-      if (correctCode) {
-        document.getElementById("submitBtn").disabled = false;
-        startTimer();
-      }
-    });
-
-    // On Submit
+    // Handle Submit
     document.getElementById("submitBtn").addEventListener("click", () => {
       clearInterval(timer);
 
-      const enteredCode = document.getElementById("codeInput").value.trim().toLowerCase();
-      const expectedCode = correctCode.trim().toLowerCase();
+      const enteredCode = document.getElementById("codeInput").value.trim();
 
-      console.log("Entered Code:", enteredCode);
-      console.log("Correct Code:", expectedCode);
-
-      if (enteredCode === expectedCode) {
+      if (enteredCode === correctCode) {
         markAttendance("Present");
       } else {
         markAttendance("Absent", "Incorrect Code");
       }
 
       document.getElementById("submitBtn").disabled = true;
+    });
+
+    // Start timer when DOM is fully loaded
+    document.addEventListener("DOMContentLoaded", () => {
+      startTimer();
     });
   </script>
 </body>
