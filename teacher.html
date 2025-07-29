@@ -1,208 +1,203 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Teacher Dashboard</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #f0f4f8;
-    }
-
-    header {
-      background-color: #4c51bf;
-      color: white;
-      padding: 20px;
-      text-align: center;
-    }
-
-    main {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
       padding: 20px;
     }
-
-    .section {
-      background-color: white;
-      border-radius: 10px;
-      padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    }
-
     h2 {
-      margin-top: 0;
-      color: #4c51bf;
+      color: #333;
     }
-
-    button {
-      background-color: #4c51bf;
-      color: white;
-      border: none;
-      padding: 10px 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 14px;
-      margin-top: 10px;
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-
-    button:hover {
-      background-color: #3730a3;
-    }
-
-    .code-box {
-      margin-top: 10px;
-      font-size: 24px;
-      font-weight: bold;
-      color: #2d3748;
-    }
-
-    ul {
-      list-style-type: none;
-      padding: 0;
-    }
-
-    li {
-      background-color: #edf2f7;
+    input, select, button {
       padding: 10px;
       margin: 5px 0;
-      border-radius: 6px;
+      width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      background: #28a745;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #218838;
+    }
+    .subject-section {
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Teacher Dashboard</h1>
-    <p id="teacherEmail">Loading teacher...</p>
-  </header>
 
-  <main>
-    <div class="section">
-      <h2>Subjects</h2>
-      <ul id="subjectList">
-        <!-- Subjects from Firebase -->
-      </ul>
-    </div>
+  <div class="card">
+    <h2>Teacher Dashboard</h2>
+    <input type="text" id="subjectInput" placeholder="Enter Subject Name">
+    <button onclick="addSubject()">Add Subject</button>
+    <div id="subjectsList"></div>
+  </div>
 
-    <div class="section">
-      <h2>Registered Students</h2>
-      <ul id="studentList">
-        <!-- Student names -->
-      </ul>
-    </div>
+  <script>
+    // Initialize Firebase
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-    <div class="section">
-      <h2>Generate Attendance Code</h2>
-      <button onclick="generateAttendanceCode()">Generate Code</button>
-      <div class="code-box" id="attendanceCode">Code: -</div>
-    </div>
-
-    <div class="section">
-      <h2>Attendance Tracker</h2>
-      <ul id="attendanceList">
-        <!-- Attendance from Firebase -->
-      </ul>
-    </div>
-  </main>
-
-  <!-- Firebase SDK and app config -->
-  <script type="module">
-    import { auth, db } from './firebase.js';
-    import {
-      onAuthStateChanged,
-      signOut
-    } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
-    import {
-      ref,
-      set,
-      get,
-      child,
-      onValue
-    } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
-
-    const teacherEmailEl = document.getElementById("teacherEmail");
-    const subjectList = document.getElementById("subjectList");
-    const studentList = document.getElementById("studentList");
-    const attendanceList = document.getElementById("attendanceList");
-    const attendanceCodeBox = document.getElementById("attendanceCode");
-
-    let currentTeacherUID = "";
-
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        teacherEmailEl.textContent = "Logged in as: " + user.email;
-        currentTeacherUID = user.uid;
-        loadSubjects();
-        loadStudents();
-        loadAttendance();
-      } else {
-        alert("Not logged in. Redirecting...");
-        window.location.href = "login.html";
-      }
-    });
-
-    function generateAttendanceCode() {
-      const code = Math.floor(1000 + Math.random() * 9000); // 4-digit code
-      attendanceCodeBox.textContent = "Code: " + code;
-
-      const codeRef = ref(db, `attendanceCodes/${currentTeacherUID}`);
-      set(codeRef, {
-        code: code,
-        timestamp: Date.now()
-      });
+    function addSubject() {
+      const subject = document.getElementById("subjectInput").value.trim();
+      if (subject === "") return alert("Please enter subject name");
+      db.ref('subjects/' + subject).set({ createdAt: Date.now() });
+      renderSubject(subject);
+      document.getElementById("subjectInput").value = '';
     }
 
-    function loadSubjects() {
-      const subRef = ref(db, `teachers/${currentTeacherUID}/subjects`);
-      onValue(subRef, (snapshot) => {
-        subjectList.innerHTML = "";
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          Object.values(data).forEach((subject) => {
-            const li = document.createElement("li");
-            li.textContent = subject;
-            subjectList.appendChild(li);
+    function renderSubject(subject) {
+      const container = document.createElement("div");
+      container.className = "card subject-section";
+      container.innerHTML = `
+        <h3>${subject}</h3>
+        <div>
+          <input type="text" placeholder="Student Name" id="${subject}-name">
+          <input type="email" placeholder="Student Email" id="${subject}-email">
+          <input type="password" placeholder="Student Password" id="${subject}-pass">
+          <button onclick="registerStudent('${subject}')">Register Student</button>
+        </div>
+        <div>
+          <button onclick="generateCode('${subject}')">Generate Code</button>
+          <p id="${subject}-codeDisplay"></p>
+        </div>
+        <div>
+          <input type="date" id="${subject}-dateExport">
+          <button onclick="exportExcel('${subject}')">Export to Excel</button>
+          <button onclick="exportPDF('${subject}')">Export to PDF</button>
+        </div>
+        <div>
+          <h4>Attendance:</h4>
+          <ul id="${subject}-attendanceList"></ul>
+        </div>
+      `;
+      document.getElementById("subjectsList").appendChild(container);
+      loadAttendance(subject);
+    }
+
+    function registerStudent(subject) {
+      const name = document.getElementById(`${subject}-name`).value.trim();
+      const email = document.getElementById(`${subject}-email`).value.trim();
+      const password = document.getElementById(`${subject}-pass`).value;
+
+      if (!name || !email || !password) return alert("All fields required");
+      firebase.auth().createUserWithEmailAndPassword(email, password)
+        .then(user => {
+          const uid = user.user.uid;
+          db.ref(`students/${uid}`).set({ name, email, subject });
+          alert("Student registered!");
+        }).catch(err => alert(err.message));
+    }
+
+    function generateCode(subject) {
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      db.ref(`codes/${subject}`).set({ code, createdAt: Date.now() });
+      document.getElementById(`${subject}-codeDisplay`).innerText = `Code: ${code}`;
+    }
+
+    function loadAttendance(subject) {
+      db.ref(`attendance/${subject}`).on('value', snapshot => {
+        const list = document.getElementById(`${subject}-attendanceList`);
+        list.innerHTML = '';
+        const data = snapshot.val();
+        if (data) {
+          Object.entries(data).forEach(([date, records]) => {
+            const li = document.createElement('li');
+            li.innerText = `${date}: ${Object.keys(records).length} students`;
+            list.appendChild(li);
           });
-        } else {
-          subjectList.innerHTML = "<li>No subjects found</li>";
         }
       });
     }
 
-    function loadStudents() {
-      const studentRef = ref(db, `teachers/${currentTeacherUID}/students`);
-      onValue(studentRef, (snapshot) => {
-        studentList.innerHTML = "";
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          Object.values(data).forEach((student) => {
-            const li = document.createElement("li");
-            li.textContent = student.name || student.email || "Unnamed student";
-            studentList.appendChild(li);
-          });
-        } else {
-          studentList.innerHTML = "<li>No registered students</li>";
-        }
+    function exportExcel(subject) {
+      const date = document.getElementById(`${subject}-dateExport`).value;
+      if (!date) return alert("Select date");
+      db.ref(`attendance/${subject}/${date}`).once('value', snapshot => {
+        const data = snapshot.val();
+        if (!data) return alert("No attendance for this date");
+        const rows = [["Name", "Email"]];
+        const studentPromises = Object.keys(data).map(uid =>
+          db.ref(`students/${uid}`).once('value').then(snap => {
+            const student = snap.val();
+            rows.push([student.name, student.email]);
+          })
+        );
+        Promise.all(studentPromises).then(() => {
+          const wb = XLSX.utils.book_new();
+          const ws = XLSX.utils.aoa_to_sheet(rows);
+          XLSX.utils.book_append_sheet(wb, ws, subject);
+          XLSX.writeFile(wb, `${subject}_${date}.xlsx`);
+        });
       });
     }
 
-    function loadAttendance() {
-      const attRef = ref(db, `attendance/${currentTeacherUID}`);
-      onValue(attRef, (snapshot) => {
-        attendanceList.innerHTML = "";
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          Object.entries(data).forEach(([studentEmail, record]) => {
-            const li = document.createElement("li");
-            li.textContent = `${studentEmail} → ${record.status || 'unknown'} @ ${new Date(record.timestamp).toLocaleString()}`;
-            attendanceList.appendChild(li);
+    function exportPDF(subject) {
+      const date = document.getElementById(`${subject}-dateExport`).value;
+      if (!date) return alert("Select date");
+      db.ref(`attendance/${subject}/${date}`).once('value', snapshot => {
+        const data = snapshot.val();
+        if (!data) return alert("No attendance for this date");
+        const rows = [["Name", "Email"]];
+        const studentPromises = Object.keys(data).map(uid =>
+          db.ref(`students/${uid}`).once('value').then(snap => {
+            const student = snap.val();
+            rows.push([student.name, student.email]);
+          })
+        );
+        Promise.all(studentPromises).then(() => {
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF();
+          doc.setFontSize(14);
+          doc.text(`Attendance - ${subject} - ${date}`, 10, 10);
+          rows.forEach((r, i) => {
+            doc.text(`${r[0]} - ${r[1]}`, 10, 20 + i * 10);
           });
-        } else {
-          attendanceList.innerHTML = "<li>No attendance records yet</li>";
-        }
+          doc.save(`${subject}_${date}.pdf`);
+        });
       });
     }
+
+    // Load existing subjects on page load
+    window.onload = () => {
+      db.ref("subjects").once('value', snapshot => {
+        const subjects = snapshot.val();
+        if (subjects) {
+          Object.keys(subjects).forEach(renderSubject);
+        }
+      });
+    };
   </script>
 </body>
 </html>
