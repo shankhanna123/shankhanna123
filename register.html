@@ -2,108 +2,106 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Register</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register | Attendance App</title>
   <style>
     body {
-      background: #f5f8fb;
-      font-family: Arial, sans-serif;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #4e54c8, #8f94fb);
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
+      margin: 0;
     }
-
-    .card {
-      background: #fff;
-      padding: 30px;
+    .register-container {
+      background-color: white;
+      padding: 30px 40px;
       border-radius: 12px;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
       width: 100%;
       max-width: 400px;
     }
-
-    h2 {
-      margin-bottom: 20px;
+    .register-container h2 {
       text-align: center;
+      margin-bottom: 25px;
       color: #333;
     }
-
-    input, select, button {
+    .register-container input,
+    .register-container select,
+    .register-container button {
       width: 100%;
       padding: 12px;
       margin: 10px 0;
-      border: 1px solid #ccc;
+      border: 1px solid #ddd;
       border-radius: 8px;
       font-size: 16px;
     }
-
-    button {
-      background: #007bff;
-      color: #fff;
+    .register-container button {
+      background-color: #4e54c8;
+      color: white;
+      font-weight: bold;
       border: none;
       cursor: pointer;
-      transition: 0.3s ease;
+      transition: background 0.3s;
     }
-
-    button:hover {
-      background: #0056b3;
-    }
-
-    .message {
-      text-align: center;
-      margin-top: 10px;
-      font-size: 14px;
-      color: green;
+    .register-container button:hover {
+      background-color: #3e44a0;
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h2>Register</h2>
-    <input type="text" id="name" placeholder="Full Name" required />
+  <div class="register-container">
+    <h2>Create Account</h2>
     <input type="email" id="email" placeholder="Email" required />
     <input type="password" id="password" placeholder="Password" required />
     <select id="role">
-      <option value="student">Student</option>
+      <option value="">Select Role</option>
       <option value="teacher">Teacher</option>
+      <option value="student">Student</option>
     </select>
     <button onclick="registerUser()">Register</button>
-    <div class="message" id="msg"></div>
   </div>
 
-  <!-- Firebase Scripts -->
   <script type="module">
     import { auth, db } from './firebase.js';
     import { createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
     import { ref, set } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js';
 
     async function registerUser() {
-      const name = document.getElementById("name").value.trim();
       const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
+      const password = document.getElementById("password").value.trim();
       const role = document.getElementById("role").value;
-      const msg = document.getElementById("msg");
+
+      if (!email || !password || !role) {
+        alert("Please fill in all fields.");
+        return;
+      }
 
       try {
-        const userCred = await createUserWithEmailAndPassword(auth, email, password);
-        const uid = userCred.user.uid;
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
 
-        // Store user role and details in Realtime Database
-        await set(ref(db, `${role}s/${uid}`), {
-          name,
-          email,
-          role,
-          uid
-        });
+        const userData = {
+          uid: user.uid,
+          email: user.email,
+          role: role
+        };
 
-        msg.innerText = `${role.charAt(0).toUpperCase() + role.slice(1)} registered successfully!`;
-        msg.style.color = "green";
+        const userRef = ref(db, role === "teacher" ? `teachers/${user.uid}` : `students/${user.uid}`);
+        await set(userRef, userData);
+
+        alert("Registration successful!");
+        // Optional redirect:
+        // window.location.href = "login.html";
       } catch (error) {
-        msg.innerText = error.message;
-        msg.style.color = "red";
+        console.error("Error:", error.message);
+        alert("Registration failed: " + error.message);
       }
     }
+
+    // Expose the function to the global scope
+    window.registerUser = registerUser;
   </script>
 </body>
 </html>
