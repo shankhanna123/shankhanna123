@@ -1,34 +1,98 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Login</title>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-  <script src="firebaseConfig.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login | Attendance Portal</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #00c6ff, #0072ff);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-container {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      width: 350px;
+      padding: 40px 30px;
+      text-align: center;
+    }
+
+    .login-container h2 {
+      margin-bottom: 24px;
+      color: #333;
+    }
+
+    .login-btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      font-size: 16px;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .login-btn.teacher {
+      background-color: #28a745;
+      color: #fff;
+    }
+
+    .login-btn.teacher:hover {
+      background-color: #218838;
+    }
+
+    .login-btn.student {
+      background-color: #007bff;
+      color: #fff;
+    }
+
+    .login-btn.student:hover {
+      background-color: #0069d9;
+    }
+
+    .branding {
+      margin-bottom: 30px;
+    }
+
+    .branding img {
+      max-width: 60px;
+    }
+
+    .branding h1 {
+      margin: 10px 0 0;
+      font-size: 20px;
+      color: #444;
+    }
+
+    @media (max-width: 400px) {
+      .login-container {
+        width: 90%;
+      }
+    }
+  </style>
 </head>
 <body>
-  <h2>Login</h2>
-  <input type="email" id="email" placeholder="Email" />
-  <input type="password" id="password" placeholder="Password" />
-  <select id="role">
-    <option value="student">Student</option>
-    <option value="teacher">Teacher</option>
-  </select>
-  <button onclick="login()">Login</button>
-  <script>
-    function login() {
-      const email = email.value;
-      const password = password.value;
-      const role = role.value;
-      auth.signInWithEmailAndPassword(email, password)
-        .then(() => {
-          localStorage.setItem("role", role);
-          if (role === "teacher") window.location.href = "teacher.html";
-          else window.location.href = "student.html";
-        })
-        .catch(err => alert("Login failed: " + err.message));
-    }
-  </script>
+
+  <div class="login-container">
+    <div class="branding">
+      <!-- Add logo here if needed -->
+      <!-- <img src="logo.png" alt="Logo"> -->
+      <h1>Attendance Portal</h1>
+    </div>
+    <h2>Select Login</h2>
+    <button class="login-btn teacher" onclick="location.href='teacher.html'">Teacher Login</button>
+    <button class="login-btn student" onclick="location.href='student.html'">Student Login</button>
+  </div>
+
 </body>
 </html>
