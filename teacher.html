@@ -1,79 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Teacher Attendance Code Generator</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Teacher Attendance Panel</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      padding: 20px;
-      max-width: 400px;
-      margin: auto;
-    }
-    h2 {
+      padding: 40px;
       text-align: center;
     }
-    #codeDisplay {
-      font-size: 24px;
-      text-align: center;
-      margin: 20px 0;
-      font-weight: bold;
-      color: green;
-    }
-    button {
-      width: 100%;
-      padding: 15px;
-      background-color: #2196F3;
-      color: white;
+    #generateCode {
+      padding: 10px 20px;
       font-size: 18px;
+      background-color: #007bff;
+      color: white;
       border: none;
       cursor: pointer;
+      border-radius: 5px;
     }
-    button:hover {
-      background-color: #1976D2;
+    #generateCode:hover {
+      background-color: #0056b3;
+    }
+    #codeDisplay {
+      margin-top: 20px;
+      font-size: 24px;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
-  <h2>Teacher - Generate Attendance Code</h2>
-  <button onclick="generateCode()">Generate Code</button>
-  <div id="codeDisplay"></div>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+  <h1>Teacher Dashboard</h1>
+  <button id="generateCode">Generate Code</button>
+  <p id="codeDisplay"></p>
+
+  <!-- Firebase v8 JS SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
   <script>
-    // ✅ Replace this with your actual Firebase config
+    // Firebase config
     const firebaseConfig = {
-  apiKey: "AIzaSyDt-pibaL2pMEu19Qgbcl4ir68W8lfqti8",
-  authDomain: "attendance-d7de7.firebaseapp.com",
-  projectId: "attendance-d7de7",
-  storageBucket: "attendance-d7de7.firebasestorage.app",
-  messagingSenderId: "470494624998",
-  appId: "1:470494624998:web:be5b5bdfb9b515d079cf27",
-  measurementId: "G-VML3R5N55W"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-    
-    function generateCode() {
-      const code = Math.floor(100000 + Math.random() * 900000).toString();
-      const timestamp = new Date().toISOString();
-
-      // Store code in Firebase
-      db.ref('attendance_codes/' + code).set({
-        createdAt: timestamp
-      }).then(() => {
-        document.getElementById("codeDisplay").innerText = "Code: " + code;
-      }).catch((error) => {
-        console.error("Error saving code:", error);
-        alert("❌ Failed to save code. Try again.");
-      });
-    }
+      apiKey: "AIzaSyDt-pibaL2pMEu19Qgbcl4ir68W8lfqti8",
+      authDomain: "attendance-d7de7.firebaseapp.com",
+      databaseURL: "https://attendance-d7de7-default-rtdb.firebaseio.com",
+      projectId: "attendance-d7de7",
+      storageBucket: "attendance-d7de7.appspot.com",
+      messagingSenderId: "470494624998",
+      appId: "1:470494624998:web:be5b5bdfb9b515d079cf27"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
   </script>
+
+  <!-- Custom Script -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const generateBtn = document.getElementById("generateCode");
+      const codeDisplay = document.getElementById("codeDisplay");
+
+      generateBtn.addEventListener("click", () => {
+        const code = Math.floor(100000 + Math.random() * 900000); // 6-digit code
+        codeDisplay.textContent = "Generated Code: " + code;
+
+        // Save to Firebase
+        database.ref("currentCode").set({
+          code: code,
+          timestamp: new Date().toISOString()
+        });
+      });
+    });
+  </script>
+
 </body>
 </html>
