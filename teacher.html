@@ -1,73 +1,132 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teacher Page</title>
-    <!-- Link your CSS files here if you have any -->
-    <!-- <link rel="stylesheet" href="style.css"> -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Dashboard</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
+      background: #f2f4f8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      background: #fff;
+      margin-top: 50px;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      width: 90%;
+      max-width: 500px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 20px;
+    }
+
+    label {
+      margin-bottom: 8px;
+      color: #555;
+      font-weight: 600;
+    }
+
+    input {
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #3730a3;
+    }
+
+    #codeDisplay {
+      margin-top: 15px;
+      text-align: center;
+      font-size: 18px;
+      color: #111;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
+  <div class="container">
+    <h1>Generate Attendance Code</h1>
+    <div class="input-group">
+      <label for="subject">Enter Subject Name</label>
+      <input type="text" id="subject" placeholder="e.g., Mathematics">
+    </div>
+    <button onclick="generateCode()">Generate Code</button>
+    <div id="codeDisplay"></div>
+  </div>
 
-    <!-- Your existing HTML elements go here -->
-    <h2>Teacher Interface</h2>
-    <button onclick="generateCode()">Generate Attendance Code</button>
-    <div id="codeDisplay">Code will appear here</div>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"></script>
 
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
-    <!-- CORRECTED: Added the Analytics SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-analytics-compat.js"></script>
+  <!-- Firebase and app logic -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDt-pibaL2pMEu19Qgbcl4ir68W8lfqti8",
+      authDomain: "attendance-d7de7.firebaseapp.com",
+      databaseURL: "https://attendance-d7de7-default-rtdb.firebaseio.com",
+      projectId: "attendance-d7de7",
+      storageBucket: "attendance-d7de7.appspot.com",
+      messagingSenderId: "470494624998",
+      appId: "1:470494624998:web:be5b5bdfb9b515d079cf27"
+    };
 
-    <!-- Your Inline Script -->
-    <script>
-        // ✅ Replace this with your actual Firebase config from your Firebase project settings
-        const firebaseConfig = {
-            apiKey: "AIzaSyDt-pibaL2pMEu19Qgbcl4ir68W8lfqti8",
-            authDomain: "attendance-d7de7.firebaseapp.com",
-            projectId: "attendance-d7de7",
-            storageBucket: "attendance-d7de7.firebasestorage.app",
-            messagingSenderId: "470494624998",
-            appId: "1:470494624998:web:be5b5bdfb9b515d079cf27",
-            measurementId: "G-VML3R5N55W"
-        };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
 
-        // Initialize Firebase App
-        const app = firebase.initializeApp(firebaseConfig);
+    function generateCode() {
+      const subject = document.getElementById("subject").value.trim();
+      if (!subject) {
+        alert("Please enter a subject name.");
+        return;
+      }
 
-        // Initialize Firebase Database
-        const db = firebase.database();
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      const timestamp = new Date().toISOString();
 
-        // CORRECTED: getAnalytics is now defined because the script tag is included above
-        // This line should now work
-
-        async function generateCode() {
-            try {
-                // Generate a random 6-digit code
-                const code = Math.floor(100000 + Math.random() * 900000).toString();
-
-                // Get a reference to the 'codes' node in your database
-                const codeRef = db.ref('codes');
-
-                // Push the new code with a server timestamp
-                await codeRef.push({
-                    code: code,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP
-                });
-
-                // Display the generated code on the page
-                document.getElementById('generatedCode').textContent = code;
-                console.log("Code generated and saved:", code);
-
-            } catch (error) {
-                console.error("Error generating or saving code:", error);
-                alert("Error generating code. Please check the browser console for details.");
-            }
-        }
-
-        // You can add other JavaScript functions here
-    </script>
-
+      database.ref("attendance_codes/" + code).set({
+        subject,
+        timestamp
+      }).then(() => {
+        document.getElementById("codeDisplay").innerText = `Code: ${code}`;
+      }).catch((error) => {
+        console.error("Error saving code to Firebase:", error);
+        alert("Failed to generate code. Try again.");
+      });
+    }
+  </script>
 </body>
 </html>
