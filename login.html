@@ -3,96 +3,55 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Login | Attendance Portal</title>
+  <title>Attendance Portal Login</title>
   <style>
     body {
-      margin: 0;
+      background: linear-gradient(to right, #667eea, #764ba2);
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(to right, #00c6ff, #0072ff);
-      height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
+      height: 100vh;
+      margin: 0;
     }
 
-    .login-container {
-      background: #fff;
-      border-radius: 12px;
+    .container {
+      background-color: white;
+      padding: 40px;
+      border-radius: 16px;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-      width: 350px;
-      padding: 40px 30px;
       text-align: center;
+      width: 300px;
     }
 
-    .login-container h2 {
-      margin-bottom: 24px;
+    h1 {
       color: #333;
+      margin-bottom: 24px;
     }
 
-    .login-btn {
-      display: block;
-      width: 100%;
-      padding: 12px;
-      margin: 10px 0;
-      font-size: 16px;
-      font-weight: bold;
+    button {
+      background-color: #5a67d8;
+      color: white;
       border: none;
+      padding: 12px 20px;
       border-radius: 8px;
+      font-size: 16px;
       cursor: pointer;
-      transition: background 0.3s ease;
+      margin: 10px 0;
+      width: 100%;
+      transition: background-color 0.3s;
     }
 
-    .login-btn.teacher {
-      background-color: #28a745;
-      color: #fff;
-    }
-
-    .login-btn.teacher:hover {
-      background-color: #218838;
-    }
-
-    .login-btn.student {
-      background-color: #007bff;
-      color: #fff;
-    }
-
-    .login-btn.student:hover {
-      background-color: #0069d9;
-    }
-
-    .branding {
-      margin-bottom: 30px;
-    }
-
-    .branding img {
-      max-width: 60px;
-    }
-
-    .branding h1 {
-      margin: 10px 0 0;
-      font-size: 20px;
-      color: #444;
-    }
-
-    @media (max-width: 400px) {
-      .login-container {
-        width: 90%;
-      }
+    button:hover {
+      background-color: #434190;
     }
   </style>
 </head>
 <body>
-
-  <div class="login-container">
-    <div class="branding">
-      <!-- Add logo here if needed -->
-      <!-- <img src="logo.png" alt="Logo"> -->
-      <h1>Attendance Portal</h1>
-    </div>
-    <h2>Select Login</h2>
-    <button class="login-btn teacher" onclick="location.href='teacher.html'">Teacher Login</button>
-    <button class="login-btn student" onclick="location.href='student.html'">Student Login</button>
+  <div class="container">
+    <h1>Welcome to Attendance Portal</h1>
+    <button onclick="location.href='teacher-login.html'">Teacher Login</button>
+    <button onclick="location.href='student-login.html'">Student Login</button>
   </div>
-
 </body>
 </html>
