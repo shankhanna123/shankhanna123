@@ -2,83 +2,101 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Student Panel</title>
+  <title>Student Attendance</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f2f2f2;
+      background: #f7f9fc;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 40px;
+      padding: 50px 20px;
     }
-
-    .container {
-      background: white;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      width: 300px;
-      text-align: center;
-    }
-
     h2 {
       color: #333;
+      margin-bottom: 20px;
     }
-
-    input {
-      padding: 10px;
-      width: 80%;
-      margin: 15px 0;
+    input, button {
+      padding: 12px;
+      margin: 10px 0;
+      width: 100%;
+      max-width: 300px;
       border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-
-    button {
-      padding: 10px 20px;
-      background-color: #0066cc;
-      color: white;
-      border: none;
       border-radius: 8px;
       font-size: 16px;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
       cursor: pointer;
+      border: none;
+      transition: background 0.3s;
     }
-
     button:hover {
-      background-color: #004999;
+      background-color: #0056b3;
     }
-
-    .status {
-      margin-top: 20px;
-      font-size: 14px;
-      color: green;
+    .form-container {
+      width: 100%;
+      max-width: 400px;
+      background: white;
+      padding: 30px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      border-radius: 10px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Student Panel</h2>
-    <input type="text" id="studentName" placeholder="Enter your name" />
-    <input type="text" id="attendanceCode" placeholder="Enter code" />
-    <button onclick="submitAttendance()">Submit</button>
-    <div class="status" id="statusMessage"></div>
+
+  <div class="form-container">
+    <h2>Student Attendance</h2>
+    <input type="text" id="name" placeholder="Enter Your Name" />
+    <input type="text" id="code" placeholder="Enter Attendance Code" />
+    <button onclick="submitAttendance()">Submit Attendance</button>
   </div>
 
-  <!-- Firebase SDKs via compat (safe) version -->
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
   <script>
-    // Firebase config
+    // Your Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyDt-pibaL2pMEu19Qgbcl4ir68W8lfqti8",
       authDomain: "attendance-d7de7.firebaseapp.com",
+      databaseURL: "https://attendance-d7de7-default-rtdb.firebaseio.com/",
       projectId: "attendance-d7de7",
       storageBucket: "attendance-d7de7.appspot.com",
       messagingSenderId: "470494624998",
       appId: "1:470494624998:web:be5b5bdfb9b515d079cf27"
-};
+    };
 
-  firebase.initializeApp(firebaseConfig);
-  const database = firebase.database();
-</script>
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    function submitAttendance() {
+      const name = document.getElementById("name").value.trim();
+      const code = document.getElementById("code").value.trim();
+
+      if (!name || !code) {
+        alert("Please enter both name and code.");
+        return;
+      }
+
+      const timestamp = new Date().toISOString();
+
+      db.ref("attendance/" + code).push({
+        name: name,
+        time: timestamp
+      }).then(() => {
+        alert("Attendance submitted successfully!");
+        document.getElementById("name").value = "";
+        document.getElementById("code").value = "";
+      }).catch((error) => {
+        alert("Error: " + error.message);
+      });
+    }
+  </script>
+</body>
+</html>
