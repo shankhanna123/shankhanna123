@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Student Dashboard</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+      margin: 0;
+      padding: 0;
+    }
+    .dashboard {
+      max-width: 500px;
+      background: white;
+      margin: 100px auto;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .info {
+      font-size: 18px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .attendance-box {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    input[type="text"] {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      padding: 10px;
+      background-color: #1877f2;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .message {
+      margin-top: 10px;
+      text-align: center;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+<div class="dashboard">
+  <h2>Welcome, <span id="studentName">Student</span></h2>
+
+  <div class="attendance-box">
+    <input type="text" id="attendanceCode" placeholder="Enter 6-digit Code" maxlength="6">
+    <button onclick="submitAttendance()">Submit Attendance</button>
+    <div class="message" id="statusMessage"></div>
+  </div>
+</div>
+
+<script>
+  const firebaseConfig = {
+  apiKey: "AIzaSyDt-pibaL2pMEu19Qgbcl4ir68W8lfqti8",
+  authDomain: "attendance-d7de7.firebaseapp.com",
+  databaseURL: "https://attendance-d7de7-default-rtdb.firebaseio.com",
+  projectId: "attendance-d7de7",
+  storageBucket: "attendance-d7de7.appspot.com",
+  messagingSenderId: "470494624998",
+  appId: "1:470494624998:web:be5b5bdfb9b515d079cf27"
+};
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.database();
+
+  let currentStudent = null;
+
+  auth.onAuthStateChanged((user) => {
+    if (user) {
+      const enrollmentNo = user.email.split("@")[0];
+      db.ref("students/" + enrollmentNo).once("value", (snapshot) => {
+        if (snapshot.exists()) {
+          currentStudent = snapshot.val();
+          document.getElementById("studentName").innerText = currentStudent.name;
+        } else {
+          document.getElementById("statusMessage").innerText = "Student not found.";
+        }
+      });
+    } else {
+      window.location.href = "login.html";
+    }
+  });
+
+  function submitAttendance() {
+    const codeInput = document.getElementById("attendanceCode").value.trim();
+    if (!codeInput || codeInput.length !== 6) {
+      document.getElementById("statusMessage").innerText = "Please enter a valid 6-digit code.";
+      return;
+    }
+
+    const currentTime = Date.now();
+
+    db.ref("teachers").once("value", (teacherSnap) => {
+      let matchedSubject = null;
+      teacherSnap.forEach((teacherNode) => {
+        const teacherId = teacherNode.key;
+        const subjects = teacherNode.child("subjects");
+        subjects.forEach((subNode) => {
+          const subject = subNode.key;
+          const codeData = subNode.child("code").val();
+          if (codeData && codeData.code === codeInput && currentTime < codeData.expiresAt) {
+            matchedSubject = { teacherId, subject };
+          }
+        });
+      });
+
+      if (matchedSubject) {
+        const today = new Date().toISOString().split("T")[0];
+        const path = `teachers/${matchedSubject.teacherId}/subjects/${matchedSubject.subject}/students/${currentStudent.enrollment}/attendance/${today}`;
+        db.ref(path).set("Present");
+        document.getElementById("statusMessage").innerText = "Attendance marked successfully!";
+      } else {
+        document.getElementById("statusMessage").innerText = "Invalid or expired code.";
+      }
+    });
+  }
+</script>
+</body>
+</html>
