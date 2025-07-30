@@ -2,52 +2,56 @@
 <html>
 <head>
   <title>Student Login</title>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f7f7f7;
       text-align: center;
-      padding-top: 100px;
+      background-color: #f3f3f3;
     }
     .login-container {
+      margin-top: 100px;
+      background-color: white;
+      padding: 30px;
       display: inline-block;
-      padding: 40px;
-      border: 1px solid #ccc;
-      background-color: #fff;
-      border-radius: 10px;
+      border-radius: 8px;
+      box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
     }
     input {
-      margin: 10px;
       padding: 10px;
-      width: 250px;
-      border: 1px solid #ddd;
+      margin: 10px;
+      width: 80%;
       border-radius: 5px;
+      border: 1px solid #ccc;
     }
     button {
       padding: 10px 20px;
-      font-size: 16px;
-      margin-top: 20px;
-      background-color: #4CAF50;
-      color: white;
       border: none;
       border-radius: 5px;
+      background-color: #4285f4;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #357ae8;
     }
   </style>
 </head>
 <body>
-
   <div class="login-container">
     <h2>Student Login</h2>
     <input type="text" id="enrollment" placeholder="Enrollment Number" required><br>
     <input type="password" id="password" placeholder="Password" required><br>
-    <button onclick="login()">Login</button>
+    <button onclick="studentLogin()">Login</button>
+    <p id="login-status" style="color: red; margin-top: 10px;"></p>
   </div>
 
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
   <script>
-    // TODO: Replace with your Firebase project config
     const firebaseConfig = {
   apiKey: "AIzaSyDt-pibaL2pMEu19Qgbcl4ir68W8lfqti8",
   authDomain: "attendance-d7de7.firebaseapp.com",
@@ -59,37 +63,37 @@
 };
 
     firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
 
-    function login() {
-      const enrollment = document.getElementById("enrollment").value.trim();
-      const password = document.getElementById("password").value.trim();
+    function studentLogin() {
+      const enrollment = document.getElementById('enrollment').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const status = document.getElementById('login-status');
 
-      if (enrollment === "" || password === "") {
-        alert("Please enter both Enrollment Number and Password.");
+      if (!enrollment || !password) {
+        status.innerText = "Please enter both fields.";
         return;
       }
 
-      const email = enrollment + "@student.attendance.com";
+      // Student UID is enrollment number
+      // Email used in Firebase Auth is a dummy: enrollment@students.com
+      const email = `${enrollment}@students.com`;
 
-      firebase.auth().signInWithEmailAndPassword(email, password)
+      auth.signInWithEmailAndPassword(email, password)
         .then((userCredential) => {
-          // Successful login
-          alert("Login successful!");
-          // Redirect to student dashboard
-          window.location.href = "student.html";
+          const user = userCredential.user;
+          status.style.color = 'green';
+          status.innerText = "Login successful! Redirecting...";
+          setTimeout(() => {
+            window.location.href = "student-dashboard.html"; // replace with your dashboard
+          }, 1000);
         })
         .catch((error) => {
-          console.error("Login error:", error.code, error.message);
-          if (error.code === "auth/user-not-found") {
-            alert("User not found. Please contact your teacher.");
-          } else if (error.code === "auth/wrong-password") {
-            alert("Incorrect password. Try again.");
-          } else {
-            alert("Login failed: " + error.message);
-          }
+          console.error(error);
+          status.innerText = "Invalid credentials. Try again.";
         });
     }
   </script>
-
 </body>
 </html>
