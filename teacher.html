@@ -1,136 +1,162 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Teacher Dashboard</title>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    .subject-container { margin-top: 20px; padding: 10px; border: 1px solid #ccc; border-radius: 10px; }
+    body { font-family: Arial; margin: 20px; }
+    .subject-card { border: 1px solid #ccc; border-radius: 10px; padding: 10px; margin-bottom: 10px; }
     .subject-header { display: flex; justify-content: space-between; align-items: center; }
-    .students-list { margin-top: 10px; }
+    .students-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    .students-table th, .students-table td { border: 1px solid #ddd; padding: 5px; }
   </style>
 </head>
 <body>
-  <h1>Welcome, Teacher</h1>
-  <button onclick="addSubject()">Add Subject</button>
-  <div id="subjectsContainer"></div>
+  <h2>Teacher Dashboard</h2>
+
+  <div>
+    <input type="text" id="subjectName" placeholder="Enter subject name">
+    <button onclick="addSubject()">Add Subject</button>
+  </div>
+
+  <div id="subjectList"></div>
 
   <script>
-    // Firebase Config (Replace with your config)
     const firebaseConfig = {
-  apiKey: "AIzaSyDt-pibaL2pMEu19Qgbcl4ir68W8lfqti8",
-  authDomain: "attendance-d7de7.firebaseapp.com",
-  databaseURL: "https://attendance-d7de7-default-rtdb.firebaseio.com",
-  projectId: "attendance-d7de7",
-  storageBucket: "attendance-d7de7.appspot.com",
-  messagingSenderId: "470494624998",
-  appId: "1:470494624998:web:be5b5bdfb9b515d079cf27"
-};
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID",
+      databaseURL: "YOUR_DATABASE_URL"
+    };
     firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
 
-    firebase.auth().onAuthStateChanged(function(user) {
+    let currentUserUID = null;
+    auth.onAuthStateChanged(user => {
       if (user) {
-        loadSubjects(user.uid);
-      } else {
-        alert("Not logged in");
-        window.location.href = "login.html";
+        currentUserUID = user.uid;
+        loadSubjects();
       }
     });
 
     function addSubject() {
-      const subjectName = prompt("Enter subject name:");
-      if (!subjectName) return;
-      const user = firebase.auth().currentUser;
-      if (!user) return;
-
-      const subjectId = Date.now();
-      firebase.database().ref(`teachers/${user.uid}/subjects/${subjectId}`).set({
-        name: subjectName
-      }).then(() => {
-        alert("Subject added");
-        loadSubjects(user.uid);
-      });
+      const name = document.getElementById("subjectName").value;
+      if (name.trim() === "") return alert("Enter subject name");
+      const ref = db.ref(`teachers/${currentUserUID}/subjects`);
+      const newRef = ref.push();
+      newRef.set({ name });
     }
 
-    function loadSubjects(teacherId) {
-      document.getElementById('subjectsContainer').innerHTML = '';
-      firebase.database().ref(`teachers/${teacherId}/subjects`).once('value', (snapshot) => {
-        snapshot.forEach((subjectSnap) => {
-          const subjectId = subjectSnap.key;
-          const subjectData = subjectSnap.val();
-          renderSubject(subjectId, subjectData, teacherId);
-        });
-      });
-    }
-
-    function renderSubject(subjectId, subjectData, teacherId) {
-      const div = document.createElement('div');
-      div.className = 'subject-container';
-      div.innerHTML = `
-        <div class="subject-header">
-          <h3>${subjectData.name}</h3>
-          <div>
-            <button onclick="addStudent('${teacherId}', '${subjectId}')">Add Student</button>
-            <button onclick="viewStudents('${teacherId}', '${subjectId}')">View Students</button>
-            <button onclick="exportToCSV('${teacherId}', '${subjectId}', '${subjectData.name}')">Export to CSV</button>
-          </div>
-        </div>
-        <div class="students-list" id="students-${subjectId}"></div>
-      `;
-      document.getElementById('subjectsContainer').appendChild(div);
-    }
-
-    function addStudent(teacherId, subjectId) {
-      const enrollment = prompt("Enrollment No. (Required):");
-      const name = prompt("Name (Required):");
-      const studentClass = prompt("Class (Required):");
-      const gender = prompt("Gender (Required):");
-      const caste = prompt("Caste (Optional):");
-      if (!enrollment || !name || !studentClass || !gender) {
-        alert("All required fields must be filled");
-        return;
-      }
-      const password = Math.random().toString(36).slice(-6);
-      const studentData = {
-        enrollment, name, class: studentClass, gender, caste, password
-      };
-      firebase.database().ref(`teachers/${teacherId}/subjects/${subjectId}/students/${enrollment}`).set(studentData);
-      firebase.database().ref(`students/${enrollment}`).set({
-        password,
-        teacherId,
-        subjectId
-      });
-      alert(`Student ${name} added with password: ${password}`);
-    }
-
-    function viewStudents(teacherId, subjectId) {
-      const container = document.getElementById(`students-${subjectId}`);
-      container.innerHTML = '';
-      firebase.database().ref(`teachers/${teacherId}/subjects/${subjectId}/students`).once('value', (snapshot) => {
-        snapshot.forEach((snap) => {
-          const s = snap.val();
-          const div = document.createElement('div');
-          div.innerText = `${s.enrollment} - ${s.name} (${s.class}) - Gender: ${s.gender}`;
+    function loadSubjects() {
+      const ref = db.ref(`teachers/${currentUserUID}/subjects`);
+      ref.on('value', snapshot => {
+        const data = snapshot.val();
+        const container = document.getElementById("subjectList");
+        container.innerHTML = '';
+        for (let key in data) {
+          const subject = data[key];
+          const div = document.createElement("div");
+          div.className = 'subject-card';
+          div.innerHTML = `
+            <div class="subject-header">
+              <strong>${subject.name}</strong>
+              <div>
+                <button onclick="showAddStudentForm('${key}')">Add Student</button>
+                <button onclick="generateCode('${key}')">Generate Code</button>
+                <button onclick="exportCSV('${key}')">Export to CSV</button>
+              </div>
+            </div>
+            <div id="studentForm-${key}" style="display:none;">
+              <input placeholder="Enrollment No." id="enroll-${key}" required>
+              <input placeholder="Name" id="name-${key}" required>
+              <input placeholder="Class" id="class-${key}" required>
+              <input placeholder="Gender" id="gender-${key}" required>
+              <input placeholder="Caste (optional)" id="caste-${key}">
+              <button onclick="addStudent('${key}')">Save Student</button>
+            </div>
+            <div id="students-${key}"></div>
+            <div id="code-${key}" style="margin-top:5px;"></div>
+          `;
           container.appendChild(div);
-        });
+          loadStudents(key);
+        }
       });
     }
 
-    function exportToCSV(teacherId, subjectId, subjectName) {
-      firebase.database().ref(`teachers/${teacherId}/subjects/${subjectId}/students`).once('value', (snapshot) => {
-        const rows = [["Enrollment", "Name", "Class", "Gender", "Caste"]];
-        snapshot.forEach((snap) => {
-          const s = snap.val();
-          rows.push([s.enrollment, s.name, s.class, s.gender, s.caste || '']);
-        });
-        const worksheet = XLSX.utils.aoa_to_sheet(rows);
+    function showAddStudentForm(subId) {
+      document.getElementById(`studentForm-${subId}`).style.display = 'block';
+    }
+
+    function addStudent(subId) {
+      const enroll = document.getElementById(`enroll-${subId}`).value.trim();
+      const name = document.getElementById(`name-${subId}`).value.trim();
+      const classVal = document.getElementById(`class-${subId}`).value.trim();
+      const gender = document.getElementById(`gender-${subId}`).value.trim();
+      const caste = document.getElementById(`caste-${subId}`).value.trim();
+      if (!enroll || !name || !classVal || !gender) return alert("Fill all required fields");
+
+      const password = Math.random().toString(36).slice(-6);
+      const email = `${enroll}@student.attend.com`;
+
+      firebase.auth().createUserWithEmailAndPassword(email, password).then(() => {
+        const studentData = { enrollment: enroll, name, class: classVal, gender, caste, password };
+        db.ref(`teachers/${currentUserUID}/subjects/${subId}/students/${enroll}`).set(studentData);
+        alert(`Student added. Password: ${password}`);
+      }).catch(err => alert("Already registered or error: " + err.message));
+    }
+
+    function loadStudents(subId) {
+      const ref = db.ref(`teachers/${currentUserUID}/subjects/${subId}/students`);
+      ref.on('value', snap => {
+        const data = snap.val();
+        const div = document.getElementById(`students-${subId}`);
+        if (!data) { div.innerHTML = ''; return; }
+        let html = `<table class="students-table"><tr><th>Enroll</th><th>Name</th><th>Class</th><th>Gender</th><th>Caste</th></tr>`;
+        for (let id in data) {
+          const s = data[id];
+          html += `<tr><td>${s.enrollment}</td><td>${s.name}</td><td>${s.class}</td><td>${s.gender}</td><td>${s.caste || ''}</td></tr>`;
+        }
+        html += '</table>';
+        div.innerHTML = html;
+      });
+    }
+
+    function generateCode(subId) {
+      const code = Math.floor(100000 + Math.random() * 900000);
+      const expTime = Date.now() + 60000; // 1 minute validity
+      db.ref(`teachers/${currentUserUID}/subjects/${subId}/attendanceCode`).set({ code, expTime });
+      document.getElementById(`code-${subId}`).innerText = `Code: ${code} (valid for 1 min)`;
+      setTimeout(() => {
+        db.ref(`teachers/${currentUserUID}/subjects/${subId}/attendanceCode`).remove();
+        document.getElementById(`code-${subId}`).innerText = "";
+      }, 60000);
+    }
+
+    function exportCSV(subId) {
+      const ref = db.ref(`teachers/${currentUserUID}/subjects/${subId}/students`);
+      ref.once('value').then(snapshot => {
+        const students = snapshot.val();
+        if (!students) return alert("No students");
+        const rows = [
+          ["Enrollment", "Name", "Class", "Gender", "Caste"]
+        ];
+        for (let id in students) {
+          const s = students[id];
+          rows.push([s.enrollment, s.name, s.class, s.gender, s.caste || ""]);
+        }
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, worksheet, subjectName);
-        XLSX.writeFile(wb, `${subjectName}_students.xlsx`);
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        XLSX.utils.book_append_sheet(wb, ws, "Students");
+        XLSX.writeFile(wb, `Subject-${subId}-Attendance.xlsx`);
       });
     }
   </script>
