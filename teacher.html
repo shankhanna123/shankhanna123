@@ -1,175 +1,178 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Teacher Dashboard</title>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.4/css/bulma.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script type="module" src="firebase.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      padding: 20px;
-    }
-    .container {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      max-width: 800px;
-      margin: auto;
-    }
-    h1, h2 {
-      color: #333;
-    }
-    input, select, button {
-      padding: 8px;
-      margin: 5px 0;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    .subject-box, .student-box {
-      margin: 10px 0;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-    button {
-      background: #007BFF;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #0056b3;
-    }
-    .hidden {
-      display: none;
-    }
+    .box { margin-top: 20px; }
+    .subject-card:hover { background: #f5f5f5; cursor: pointer; }
   </style>
 </head>
 <body>
-<div class="container">
-  <h1>Teacher Dashboard</h1>
-  <div>
-    <h2>Add Subject</h2>
-    <input type="text" id="subjectInput" placeholder="Enter subject name" />
-    <button onclick="addSubject()">Add Subject</button>
-  </div>
-  <div>
-    <h2>View Subjects</h2>
-    <button onclick="loadSubjects()">View Subjects</button>
-    <div id="subjectList"></div>
-  </div>
-</div>
+  <section class="section">
+    <div class="container">
+      <h1 class="title">Welcome, Teacher</h1>
 
-<script>
-  const firebaseConfig = {
-  apiKey: "AIzaSyDt-pibaL2pMEu19Qgbcl4ir68W8lfqti8",
-  authDomain: "attendance-d7de7.firebaseapp.com",
-  databaseURL: "https://attendance-d7de7-default-rtdb.firebaseio.com",
-  projectId: "attendance-d7de7",
-  storageBucket: "attendance-d7de7.appspot.com",
-  messagingSenderId: "470494624998",
-  appId: "1:470494624998:web:be5b5bdfb9b515d079cf27"
-};
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.database();
+      <!-- Subject Add -->
+      <div class="box">
+        <h2 class="subtitle">Add Subject</h2>
+        <div class="field">
+          <div class="control">
+            <input id="subjectName" class="input" type="text" placeholder="Subject Name">
+          </div>
+        </div>
+        <button class="button is-primary" onclick="addSubject()">Add Subject</button>
+      </div>
 
-  let currentUser;
+      <!-- View Subjects -->
+      <div class="box">
+        <h2 class="subtitle">Subjects</h2>
+        <div id="subjectsList"></div>
+      </div>
 
-  auth.onAuthStateChanged(user => {
-    if (user) {
-      currentUser = user;
-    } else {
-      window.location.href = 'teacher-login.html';
-    }
-  });
+      <!-- Add Student Modal Trigger -->
+      <div class="box">
+        <h2 class="subtitle">Student Management</h2>
+        <button class="button is-link" onclick="document.getElementById('studentModal').classList.add('is-active')">Add Student</button>
+      </div>
 
-  function addSubject() {
-    const subject = document.getElementById("subjectInput").value.trim();
-    if (!subject) return alert("Enter subject name");
+      <!-- Student Modal -->
+      <div id="studentModal" class="modal">
+        <div class="modal-background" onclick="closeStudentModal()"></div>
+        <div class="modal-card">
+          <header class="modal-card-head">
+            <p class="modal-card-title">Add Student</p>
+            <button class="delete" aria-label="close" onclick="closeStudentModal()"></button>
+          </header>
+          <section class="modal-card-body">
+            <div class="field">
+              <label class="label">Enrollment No.</label>
+              <div class="control">
+                <input id="enrollNo" class="input" type="text" required>
+              </div>
+            </div>
+            <div class="field">
+              <label class="label">Name</label>
+              <div class="control">
+                <input id="studentName" class="input" type="text" required>
+              </div>
+            </div>
+            <div class="field">
+              <label class="label">Class</label>
+              <div class="control">
+                <input id="studentClass" class="input" type="text" required>
+              </div>
+            </div>
+            <div class="field">
+              <label class="label">Gender</label>
+              <div class="control">
+                <input id="studentGender" class="input" type="text" required>
+              </div>
+            </div>
+            <div class="field">
+              <label class="label">Caste (optional)</label>
+              <div class="control">
+                <input id="studentCaste" class="input" type="text">
+              </div>
+            </div>
+            <div class="field">
+              <label class="label">Subject</label>
+              <div class="control">
+                <input id="studentSubject" class="input" type="text" required>
+              </div>
+            </div>
+          </section>
+          <footer class="modal-card-foot">
+            <button class="button is-success" onclick="addStudent()">Save</button>
+            <button class="button" onclick="closeStudentModal()">Cancel</button>
+          </footer>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    const subjectRef = db.ref(`teachers/${currentUser.uid}/subjects/${subject}`);
-    subjectRef.set({ createdAt: Date.now() });
-    alert("Subject added");
-    document.getElementById("subjectInput").value = '';
-  }
+  <script type="module">
+    import { db, auth } from './firebase.js';
+    import { ref, push, set, child, get } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
+    import { getAuth } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js';
 
-  function loadSubjects() {
-    const subjectList = document.getElementById("subjectList");
-    subjectList.innerHTML = '';
+    const teacherId = auth.currentUser?.uid;
 
-    db.ref(`teachers/${currentUser.uid}/subjects`).once('value', snapshot => {
-      snapshot.forEach(subjectSnap => {
-        const subjectName = subjectSnap.key;
+    window.addSubject = async () => {
+      const subject = document.getElementById('subjectName').value.trim();
+      if (!subject || !teacherId) return;
+      const subjectRef = ref(db, `teachers/${teacherId}/subjects/${subject}`);
+      await set(subjectRef, { created: new Date().toISOString() });
+      document.getElementById('subjectName').value = '';
+      loadSubjects();
+    };
+
+    window.loadSubjects = async () => {
+      const listDiv = document.getElementById('subjectsList');
+      listDiv.innerHTML = '';
+      const snapshot = await get(ref(db, `teachers/${teacherId}/subjects`));
+      if (!snapshot.exists()) return;
+      const subjects = snapshot.val();
+      for (const subject in subjects) {
         const div = document.createElement('div');
-        div.className = 'subject-box';
-        div.innerHTML = `
-          <strong>${subjectName}</strong>
-          <br>
-          <button onclick="viewStudents('${subjectName}')">View Students</button>
-          <button onclick="generateCode('${subjectName}')">Generate Attendance Code</button>
-          <button onclick="exportAttendance('${subjectName}')">Export Attendance</button>
-          <div id="students-${subjectName}" class="student-box hidden"></div>
-        `;
-        subjectList.appendChild(div);
-      });
-    });
-  }
+        div.className = 'box subject-card';
+        div.innerHTML = `<strong>${subject}</strong> <button class="button is-small is-info is-pulled-right" onclick="viewSubject('${subject}')">View</button>`;
+        listDiv.appendChild(div);
+      }
+    };
 
-  function viewStudents(subjectName) {
-    const box = document.getElementById(`students-${subjectName}`);
-    box.innerHTML = '';
-    box.classList.remove('hidden');
+    window.viewSubject = async (subject) => {
+      const studentsRef = ref(db, `teachers/${teacherId}/subjects/${subject}/students`);
+      const snapshot = await get(studentsRef);
+      if (!snapshot.exists()) {
+        alert('No students found for this subject.');
+        return;
+      }
+      const students = snapshot.val();
+      let csv = 'Enrollment No,Name,Class,Gender,Caste\n';
+      for (const id in students) {
+        const s = students[id];
+        csv += `${id},${s.name},${s.class},${s.gender},${s.caste || ''}\n`;
+      }
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${subject}_students.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
 
-    db.ref(`teachers/${currentUser.uid}/subjects/${subjectName}/students`).once('value', snap => {
-      snap.forEach(child => {
-        const student = child.val();
-        const div = document.createElement('div');
-        div.textContent = `${student.name} - ${student.email}`;
-        box.appendChild(div);
-      });
-    });
-  }
+    window.closeStudentModal = () => {
+      document.getElementById('studentModal').classList.remove('is-active');
+    };
 
-  function generateCode(subjectName) {
-    const code = Math.floor(100000 + Math.random() * 900000);
-    db.ref(`attendanceCodes/${currentUser.uid}/${subjectName}`).set({
-      code,
-      timestamp: Date.now()
-    });
-    alert(`Code for ${subjectName} is ${code}`);
-  }
+    window.addStudent = async () => {
+      const enrollNo = document.getElementById('enrollNo').value.trim();
+      const name = document.getElementById('studentName').value.trim();
+      const sclass = document.getElementById('studentClass').value.trim();
+      const gender = document.getElementById('studentGender').value.trim();
+      const caste = document.getElementById('studentCaste').value.trim();
+      const subject = document.getElementById('studentSubject').value.trim();
+      if (!enrollNo || !name || !sclass || !gender || !subject) {
+        alert('Please fill all required fields.');
+        return;
+      }
+      const password = Math.random().toString(36).slice(-6);
+      const studentData = { name, class: sclass, gender, caste, password };
+      await set(ref(db, `teachers/${teacherId}/subjects/${subject}/students/${enrollNo}`), studentData);
+      await set(ref(db, `students/${enrollNo}`), { ...studentData, subject, teacherId });
+      closeStudentModal();
+      alert(`Student added. ID: ${enrollNo}, Password: ${password}`);
+    };
 
-  function exportAttendance(subjectName) {
-    const attendanceRef = db.ref(`teachers/${currentUser.uid}/subjects/${subjectName}/attendance`);
-    attendanceRef.once('value', snapshot => {
-      const data = [];
-      snapshot.forEach(dateSnap => {
-        const date = dateSnap.key;
-        const studentData = dateSnap.val();
-        for (let studentId in studentData) {
-          data.push({
-            Date: date,
-            Student: studentData[studentId].name,
-            Email: studentData[studentId].email,
-            Status: studentData[studentId].status
-          });
-        }
-      });
-
-      const ws = XLSX.utils.json_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Attendance");
-      XLSX.writeFile(wb, `${subjectName}_Attendance.xlsx`);
-    });
-  }
-</script>
+    loadSubjects();
+  </script>
 </body>
 </html>
