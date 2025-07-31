@@ -2,98 +2,120 @@
 <html>
 <head>
   <title>Student Login</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background-color: #f3f3f3;
+      font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #e3eeff 0%, #f9faff 100%);
+      color: #222;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
     }
     .login-container {
-      margin-top: 100px;
-      background-color: white;
-      padding: 30px;
-      display: inline-block;
-      border-radius: 8px;
-      box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+      background: #fff;
+      max-width: 400px;
+      margin: 60px auto 0 auto;
+      border-radius: 18px;
+      box-shadow: 0 8px 28px rgba(67, 100, 247, 0.07);
+      padding: 36px 32px 32px 32px;
     }
-    input {
-      padding: 10px;
-      margin: 10px;
-      width: 80%;
-      border-radius: 5px;
-      border: 1px solid #ccc;
+    h2 {
+      color: #4364f7;
+      font-weight: 700;
+      margin-top: 0;
+      text-align: center;
+    }
+    input, select {
+      width: 100%;
+      padding: 13px 13px;
+      margin: 10px 0 18px 0;
+      border: 1.3px solid #e5e9f2;
+      border-radius: 7px;
+      font-size: 1.01rem;
+      background: #f7faff;
+      font-family: inherit;
+      transition: border 0.2s;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border: 1.3px solid #8fb7fc;
+      background: #f2f7ff;
     }
     button {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 5px;
-      background-color: #4285f4;
+      background: linear-gradient(90deg, #4364f7 0%, #6fb1fc 100%);
       color: white;
-      font-size: 16px;
+      border: none;
+      padding: 12px 30px;
+      font-size: 1.01rem;
+      border-radius: 8px;
       cursor: pointer;
+      font-weight: 600;
+      box-shadow: 0 2px 12px rgba(67, 100, 247, 0.08);
+      margin: 0 4px 10px 0;
+      transition: background 0.18s, transform 0.12s;
     }
     button:hover {
-      background-color: #357ae8;
+      background: linear-gradient(90deg, #3350b7 0%, #5191e1 100%);
+      transform: translateY(-1px) scale(1.02);
+    }
+    .success-message {
+      color: #178c18;
+      font-weight: 500;
+      text-align: center;
+    }
+    .error-message {
+      color: #e25353;
+      font-weight: 500;
+      text-align: center;
+    }
+    .attendance-section {
+      margin-top: 28px;
+      padding: 20px 12px 10px 12px;
+      background: #f8fbff;
+      border-radius: 12px;
+      box-shadow: 0 1px 8px rgba(67, 100, 247, 0.04);
+      display: none;
+    }
+    .attendance-timer {
+      font-weight: 600;
+      color: #e25353;
+      margin-left: 12px;
+    }
+    .attendance-code-display {
+      font-size: 1.13em;
+      font-weight: 700;
+      margin-top: 6px;
+      color: #3960bf;
+      margin-bottom: 12px;
     }
   </style>
 </head>
 <body>
   <div class="login-container">
     <h2>Student Login</h2>
-    <input type="text" id="enrollment" placeholder="Enrollment Number" required><br>
-    <input type="password" id="password" placeholder="Password" required><br>
-    <button onclick="studentLogin()">Login</button>
-    <p id="login-status" style="color: red; margin-top: 10px;"></p>
+    <input type="text" id="enrollment-input" placeholder="Enrollment Number" required />
+    <input type="password" id="password-input" placeholder="Password" required />
+    <button id="login-btn">Login</button>
+    <div id="login-message" class="error-message"></div>
+
+    <div class="attendance-section" id="attendance-section">
+      <div>
+        <span class="attendance-code-display" id="attendance-code-display"></span>
+        <span class="attendance-timer" id="attendance-timer"></span>
+      </div>
+      <input type="text" id="attendance-code-input" placeholder="Enter Attendance Code" maxlength="6" />
+      <button id="submit-attendance-btn">Submit Attendance Code</button>
+      <div id="attendance-message" class="error-message"></div>
+      <div id="attendance-success" class="success-message"></div>
+    </div>
   </div>
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-
-  <script>
-    const firebaseConfig = {
-  apiKey: "AIzaSyDt-pibaL2pMEu19Qgbcl4ir68W8lfqti8",
-  authDomain: "attendance-d7de7.firebaseapp.com",
-  databaseURL: "https://attendance-d7de7-default-rtdb.firebaseio.com",
-  projectId: "attendance-d7de7",
-  storageBucket: "attendance-d7de7.appspot.com",
-  messagingSenderId: "470494624998",
-  appId: "1:470494624998:web:be5b5bdfb9b515d079cf27"
-};
-
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.database();
-
-    function studentLogin() {
-      const enrollment = document.getElementById('enrollment').value.trim();
-      const password = document.getElementById('password').value.trim();
-      const status = document.getElementById('login-status');
-
-      if (!enrollment || !password) {
-        status.innerText = "Please enter both fields.";
-        return;
-      }
-
-      // Student UID is enrollment number
-      // Email used in Firebase Auth is a dummy: enrollment@students.com
-      const email = `${enrollment}@students.com`;
-
-      auth.signInWithEmailAndPassword(email, password)
-        .then((userCredential) => {
-          const user = userCredential.user;
-          status.style.color = 'green';
-          status.innerText = "Login successful! Redirecting...";
-          setTimeout(() => {
-            window.location.href = "student-dashboard.html"; // replace with your dashboard
-          }, 1000);
-        })
-        .catch((error) => {
-          console.error(error);
-          status.innerText = "Invalid credentials. Try again.";
-        });
-    }
-  </script>
+  <!-- Firebase App (the core Firebase SDK) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="student.js"></script>
 </body>
 </html>
