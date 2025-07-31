@@ -116,6 +116,19 @@
   <!-- Firebase App (the core Firebase SDK) -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script>
+    // Initialize Firebase here to fix the app/no-app error
+    const firebaseConfig = {
+      apiKey: "AIzaSyDt-pibaL2pMEu19Qgbcl4ir68W8lfqti8",
+      authDomain: "attendance-d7de7.firebaseapp.com",
+      databaseURL: "https://attendance-d7de7-default-rtdb.firebaseio.com",
+      projectId: "attendance-d7de7",
+      storageBucket: "attendance-d7de7.appspot.com",
+      messagingSenderId: "470494624998",
+      appId: "1:470494624998:web:be5b5bdfb9b515d079cf27"
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
   <script src="student.js"></script>
 </body>
 </html>
