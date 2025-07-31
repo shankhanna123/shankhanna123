@@ -1,4 +1,4 @@
-// Initialize Firebase (already done in HTML, this line is just for reference)
+// Initialize Firebase (already done in HTML)
 // firebase.initializeApp(firebaseConfig);
 
 const db = firebase.database();
@@ -9,6 +9,11 @@ const subjectNameInput = document.getElementById('subject-name');
 // Utility: Generate random 6-char password
 function generatePassword() {
   return Math.random().toString(36).slice(-6);
+}
+
+// Utility: Generate random 6-digit attendance code
+function generateAttendanceCode() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
 // Load subjects and render them
@@ -29,6 +34,9 @@ function renderSubject(subjectKey, subjectData) {
   section.innerHTML = `
     <h3>${subjectData.name}</h3>
     <button class="small-btn add-student-btn">Add Student</button>
+    <button class="small-btn generate-code-btn">Generate Code</button>
+    <span class="attendance-code-timer"></span>
+    <div class="attendance-code-display"></div>
     <div class="student-form">
       <h4>Add Student to ${subjectData.name}</h4>
       <input type="text" class="enroll-input" placeholder="Enrollment Number" required />
@@ -128,6 +136,72 @@ function renderSubject(subjectKey, subjectData) {
 
   // Load students for this subject
   loadStudents(section, subjectKey);
+
+  // --- Attendance Code Logic ---
+  const generateCodeBtn = section.querySelector('.generate-code-btn');
+  const codeDisplay = section.querySelector('.attendance-code-display');
+  const timerDisplay = section.querySelector('.attendance-code-timer');
+  let timerInterval = null;
+
+  generateCodeBtn.onclick = async function () {
+    // Generate a random 6-digit code
+    const code = generateAttendanceCode();
+    // 1 minute expiry
+    const expiry = Date.now() + 60 * 1000;
+
+    // Mark all students as absent for this round
+    const studentsSnap = await db.ref(`subjects/${subjectKey}/students`).once('value');
+    const students = studentsSnap.val() || {};
+    Object.keys(students).forEach(enroll => {
+      db.ref(`attendance/${subjectKey}/${getTodayDate()}/${enroll}`).set({ status: "absent" });
+    });
+
+    // Save code and expiry in Firebase
+    db.ref(`subjects/${subjectKey}/attendanceCode`).set({
+      code: code,
+      expiry: expiry
+    });
+    // Timer and code will sync via listener below
+  };
+
+  function startAttendanceTimer(code, expiry) {
+    if (timerInterval) clearInterval(timerInterval);
+    const update = () => {
+      const now = Date.now();
+      const remaining = Math.max(0, Math.floor((expiry - now) / 1000));
+      codeDisplay.textContent = `Attendance Code: ${code}`;
+      timerDisplay.textContent = remaining > 0
+        ? `Time left: ${remaining}s`
+        : `Time's up!`;
+      if (remaining <= 0) {
+        clearInterval(timerInterval);
+        setTimeout(() => {
+          codeDisplay.textContent = "";
+          timerDisplay.textContent = "";
+        }, 2500);
+      }
+    };
+    update();
+    timerInterval = setInterval(update, 1000);
+  }
+
+  // Listen for code changes (teacher and student screens sync)
+  db.ref(`subjects/${subjectKey}/attendanceCode`).on('value', function(snapshot) {
+    const val = snapshot.val();
+    if (val && val.code && val.expiry) {
+      startAttendanceTimer(val.code, val.expiry);
+    } else {
+      codeDisplay.textContent = "";
+      timerDisplay.textContent = "";
+      if (timerInterval) clearInterval(timerInterval);
+    }
+  });
+}
+
+// Get today's date as YYYY-MM-DD
+function getTodayDate() {
+  const today = new Date();
+  return today.toISOString().slice(0, 10);
 }
 
 // Clear student form input fields
