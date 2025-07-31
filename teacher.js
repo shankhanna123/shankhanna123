@@ -6,17 +6,14 @@ const subjectsContainer = document.getElementById('subjects-container');
 const addSubjectBtn = document.getElementById('add-subject-btn');
 const subjectNameInput = document.getElementById('subject-name');
 
-// Utility: Generate random 6-char password
 function generatePassword() {
   return Math.random().toString(36).slice(-6);
 }
 
-// Utility: Generate random 6-digit attendance code
 function generateAttendanceCode() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// Load subjects and render them
 function loadSubjects() {
   subjectsContainer.innerHTML = "";
   db.ref('subjects').once('value', (snapshot) => {
@@ -27,7 +24,6 @@ function loadSubjects() {
   });
 }
 
-// Render a single subject section
 function renderSubject(subjectKey, subjectData) {
   const section = document.createElement('div');
   section.className = 'section subject-section';
@@ -37,6 +33,13 @@ function renderSubject(subjectKey, subjectData) {
     <button class="small-btn generate-code-btn">Generate Code</button>
     <span class="attendance-code-timer"></span>
     <div class="attendance-code-display"></div>
+    <div class="export-attendance-wrapper" title="Export Attendance">
+      <button class="export-attendance-btn">Export Attendance</button>
+      <div class="export-dropdown">
+        <button class="export-pdf-btn">Export as PDF</button>
+        <button class="export-excel-btn">Export as Excel</button>
+      </div>
+    </div>
     <div class="student-form">
       <h4>Add Student to ${subjectData.name}</h4>
       <input type="text" class="enroll-input" placeholder="Enrollment Number" required />
@@ -115,7 +118,6 @@ function renderSubject(subjectKey, subjectData) {
       if (error) {
         studentForm.querySelector('.student-form-message').textContent = 'Error adding student.';
       } else {
-        // Also save student for login lookup (optional: global student list)
         db.ref(`students/${enroll}`).set({
           name,
           class: className,
@@ -144,24 +146,19 @@ function renderSubject(subjectKey, subjectData) {
   let timerInterval = null;
 
   generateCodeBtn.onclick = async function () {
-    // Generate a random 6-digit code
     const code = generateAttendanceCode();
-    // 1 minute expiry
     const expiry = Date.now() + 60 * 1000;
 
-    // Mark all students as absent for this round
     const studentsSnap = await db.ref(`subjects/${subjectKey}/students`).once('value');
     const students = studentsSnap.val() || {};
     Object.keys(students).forEach(enroll => {
       db.ref(`attendance/${subjectKey}/${getTodayDate()}/${enroll}`).set({ status: "absent" });
     });
 
-    // Save code and expiry in Firebase
     db.ref(`subjects/${subjectKey}/attendanceCode`).set({
       code: code,
       expiry: expiry
     });
-    // Timer and code will sync via listener below
   };
 
   function startAttendanceTimer(code, expiry) {
@@ -185,7 +182,6 @@ function renderSubject(subjectKey, subjectData) {
     timerInterval = setInterval(update, 1000);
   }
 
-  // Listen for code changes (teacher and student screens sync)
   db.ref(`subjects/${subjectKey}/attendanceCode`).on('value', function(snapshot) {
     const val = snapshot.val();
     if (val && val.code && val.expiry) {
@@ -196,15 +192,28 @@ function renderSubject(subjectKey, subjectData) {
       if (timerInterval) clearInterval(timerInterval);
     }
   });
+
+  // ---- Export Attendance Logic ----
+  // Export PDF and Excel logic (using jsPDF and SheetJS)
+  const exportAttendanceBtn = section.querySelector('.export-attendance-btn');
+  const exportPdfBtn = section.querySelector('.export-pdf-btn');
+  const exportExcelBtn = section.querySelector('.export-excel-btn');
+
+  exportPdfBtn.onclick = function (e) {
+    e.preventDefault();
+    exportAttendanceData(subjectKey, subjectData.name, 'pdf');
+  };
+  exportExcelBtn.onclick = function (e) {
+    e.preventDefault();
+    exportAttendanceData(subjectKey, subjectData.name, 'excel');
+  };
 }
 
-// Get today's date as YYYY-MM-DD
 function getTodayDate() {
   const today = new Date();
   return today.toISOString().slice(0, 10);
 }
 
-// Clear student form input fields
 function clearStudentForm(form) {
   form.querySelector('.enroll-input').value = '';
   form.querySelector('.name-input').value = '';
@@ -214,7 +223,6 @@ function clearStudentForm(form) {
   form.querySelector('.student-form-message').textContent = '';
 }
 
-// Load students for a subject and render in table
 function loadStudents(section, subjectKey) {
   const studentListBody = section.querySelector('.student-list-body');
   studentListBody.innerHTML = '';
@@ -240,7 +248,6 @@ function loadStudents(section, subjectKey) {
 addSubjectBtn.onclick = function () {
   const name = subjectNameInput.value.trim();
   if (!name) return;
-  // Create a unique key for the subject
   const subjectKey = name.replace(/\s+/g, '_').toLowerCase() + '_' + Date.now();
   db.ref('subjects/' + subjectKey).set({
     name
@@ -251,6 +258,93 @@ addSubjectBtn.onclick = function () {
     }
   });
 };
+
+function exportAttendanceData(subjectKey, subjectName, type) {
+  // 1. Get all students
+  db.ref(`subjects/${subjectKey}/students`).once('value', stuSnap => {
+    const students = stuSnap.val() || {};
+    // 2. Get all attendance dates for this subject
+    db.ref(`attendance/${subjectKey}`).once('value', attSnap => {
+      const attData = attSnap.val() || {};
+      // Collect all dates
+      const dates = Object.keys(attData);
+      // Build header row
+      const headerRow = ["Enrollment No.", "Name", ...dates];
+      // Build data rows
+      const rows = [];
+      Object.keys(students).forEach(enroll => {
+        const s = students[enroll];
+        const row = [
+          enroll,
+          s.name,
+          ...dates.map(date =>
+            (attData[date] && attData[date][enroll] && attData[date][enroll].status)
+              ? attData[date][enroll].status : "absent"
+          )
+        ];
+        rows.push(row);
+      });
+
+      // Export logic
+      if (type === "pdf") {
+        exportAttendanceToPDF(subjectName, headerRow, rows);
+      } else if (type === "excel") {
+        exportAttendanceToExcel(subjectName, headerRow, rows);
+      }
+    });
+  });
+}
+
+function exportAttendanceToPDF(subjectName, headerRow, rows) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({
+    orientation: 'landscape',
+    unit: 'pt'
+  });
+  doc.setFontSize(16);
+  doc.text(`Attendance Report: ${subjectName}`, 40, 40);
+
+  // Table
+  let startY = 70;
+  const cellPadding = 8;
+  const colWidths = Array(headerRow.length).fill(110);
+  let y = startY;
+
+  // Draw header
+  let x = 40;
+  doc.setFont(undefined, 'bold');
+  headerRow.forEach((header, i) => {
+    doc.text(header, x, y);
+    x += colWidths[i];
+  });
+  doc.setFont(undefined, 'normal');
+  y += 22;
+
+  // Draw rows
+  rows.forEach(row => {
+    x = 40;
+    row.forEach((cell, i) => {
+      doc.text(String(cell), x, y);
+      x += colWidths[i];
+    });
+    y += 18;
+    if (y > 540) { // Page break
+      doc.addPage();
+      y = 40;
+    }
+  });
+
+  doc.save(`${subjectName.replace(/\s+/g, '_')}_Attendance.pdf`);
+}
+
+function exportAttendanceToExcel(subjectName, headerRow, rows) {
+  // Prepare worksheet data
+  const ws_data = [headerRow, ...rows];
+  const ws = XLSX.utils.aoa_to_sheet(ws_data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Attendance");
+  XLSX.writeFile(wb, `${subjectName.replace(/\s+/g, '_')}_Attendance.xlsx`);
+}
 
 // Initial load
 loadSubjects();
