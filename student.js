@@ -7,7 +7,7 @@ const passwordInput = document.getElementById('password-input');
 const loginBtn = document.getElementById('login-btn');
 const loginMessage = document.getElementById('login-message');
 const attendanceSection = document.getElementById('attendance-section');
-const attendanceCodeDisplay = document.getElementById('attendance-code-display');
+// Removed: const attendanceCodeDisplay = document.getElementById('attendance-code-display');
 const attendanceTimer = document.getElementById('attendance-timer');
 const attendanceCodeInput = document.getElementById('attendance-code-input');
 const submitAttendanceBtn = document.getElementById('submit-attendance-btn');
@@ -72,7 +72,7 @@ loginBtn.onclick = async function () {
 function listenForAttendanceCode(subjectKey) {
   if (!subjectKey) return;
   if (attendanceTimerInterval) clearInterval(attendanceTimerInterval);
-  attendanceCodeDisplay.textContent = '';
+  // Removed: attendanceCodeDisplay.textContent = '';
   attendanceTimer.textContent = '';
   attendanceCodeInput.value = '';
   attendanceMessage.textContent = '';
@@ -84,17 +84,17 @@ function listenForAttendanceCode(subjectKey) {
     const val = snapshot.val();
     if (val && val.code && val.expiry) {
       attendanceCodeData = val;
-      showAttendanceTimer(val.code, val.expiry);
+      showAttendanceTimer(val.expiry);
     } else {
       attendanceCodeData = null;
-      attendanceCodeDisplay.textContent = '';
+      // Removed: attendanceCodeDisplay.textContent = '';
       attendanceTimer.textContent = '';
       if (attendanceTimerInterval) clearInterval(attendanceTimerInterval);
     }
   });
 }
 
-function showAttendanceTimer(code, expiry) {
+function showAttendanceTimer(expiry) {
   if (attendanceTimerInterval) clearInterval(attendanceTimerInterval);
   attendanceMarked = false;
   attendanceSuccess.textContent = "";
@@ -106,7 +106,7 @@ function showAttendanceTimer(code, expiry) {
   const update = () => {
     const now = Date.now();
     const remaining = Math.max(0, Math.floor((expiry - now) / 1000));
-    attendanceCodeDisplay.textContent = `Attendance Code: ${code}`;
+    // Removed: attendanceCodeDisplay.textContent = `Attendance Code: ${code}`;
     attendanceTimer.textContent = remaining > 0
       ? `Time left: ${remaining}s`
       : `Time's up!`;
