@@ -197,6 +197,68 @@
       color: #3960bf;
     }
 
+    /* Export attendance button and dropdown */
+    .export-attendance-wrapper {
+      display: inline-block;
+      position: relative;
+      margin-left: 4px;
+      margin-bottom: 4px;
+    }
+    .export-attendance-btn {
+      background: linear-gradient(90deg, #5cb85c 0%, #6fb1fc 100%);
+      color: #fff;
+      padding: 8px 22px;
+      font-size: 0.98rem;
+      border-radius: 7px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      margin-top: 8px;
+      transition: background 0.18s, transform 0.12s;
+    }
+    .export-attendance-btn:hover {
+      background: linear-gradient(90deg, #398439 0%, #5191e1 100%);
+      transform: translateY(-2px) scale(1.03);
+    }
+    .export-dropdown {
+      display: none;
+      position: absolute;
+      left: 0;
+      top: 110%;
+      background: #fff;
+      box-shadow: 0 3px 15px rgba(67, 100, 247, 0.13);
+      border-radius: 7px;
+      z-index: 10;
+      min-width: 140px;
+      padding: 0;
+      margin: 0;
+    }
+    .export-dropdown button {
+      background: none;
+      color: #3960bf;
+      border: none;
+      width: 100%;
+      text-align: left;
+      padding: 12px 18px;
+      font-size: 1rem;
+      border-bottom: 1px solid #e6eaf3;
+      border-radius: 0;
+      box-shadow: none;
+      margin: 0;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .export-dropdown button:last-child {
+      border-bottom: none;
+    }
+    .export-dropdown button:hover {
+      background: #e8f0fe;
+      color: #2250aa;
+    }
+    .export-attendance-wrapper:hover .export-dropdown {
+      display: block;
+    }
+
     @media screen and (max-width: 900px) {
       main {
         padding: 20px 2vw;
@@ -246,7 +308,10 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
+  <!-- jsPDF for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- SheetJS for Excel export -->
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyDt-pibaL2pMEu19Qgbcl4ir68W8lfqti8",
