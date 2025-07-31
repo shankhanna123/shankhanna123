@@ -6,40 +6,49 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link href="https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --color-primary: #4364f7;
+      --color-secondary: #6fb1fc;
+      --color-bg: #f5f8fd;
+      --color-white: #fff;
+      --color-text: #232946;
+      --color-shadow: rgba(67, 100, 247, 0.08);
+      --radius: 18px;
+      --transition: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    * {
+      box-sizing: border-box;
+    }
     body {
       font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
       padding: 0;
-      background: linear-gradient(135deg, #e3eeff 0%, #f9faff 100%);
-      color: #222;
+      background: var(--color-bg);
+      color: var(--color-text);
       min-height: 100vh;
     }
-
     header {
-      background: linear-gradient(90deg, #4364f7 0%, #6fb1fc 100%);
+      background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-secondary) 100%);
       color: white;
       padding: 32px 0 26px 0;
       text-align: center;
-      box-shadow: 0 6px 28px rgba(67, 100, 247, 0.15);
+      box-shadow: 0 6px 28px var(--color-shadow);
       border-bottom-left-radius: 40px;
       border-bottom-right-radius: 40px;
       position: relative;
     }
-
     header h1 {
-      font-size: 2.7rem;
+      font-size: 2.5rem;
       font-weight: 700;
       letter-spacing: 1px;
       margin: 0;
       text-shadow: 0 2px 8px rgba(0,0,0,0.07);
     }
-
-    /* Signout button styles */
     #sign-out-btn {
       position: absolute;
       top: 38px;
       right: 38px;
-      background: linear-gradient(90deg, #4364f7 0%, #6fb1fc 100%);
+      background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-secondary) 100%);
       color: white;
       border: none;
       padding: 13px 32px;
@@ -47,43 +56,172 @@
       border-radius: 9px;
       cursor: pointer;
       font-weight: 600;
-      box-shadow: 0 2px 12px rgba(67, 100, 247, 0.08);
+      box-shadow: 0 2px 12px var(--color-shadow);
       margin: 0 4px 10px 0;
-      transition: background 0.18s, transform 0.12s;
+      transition: background var(--transition), transform var(--transition);
+      outline: none;
     }
-    #sign-out-btn:hover {
+    #sign-out-btn:hover, #sign-out-btn:focus {
       background: linear-gradient(90deg, #3350b7 0%, #5191e1 100%);
       transform: translateY(-2px) scale(1.03);
     }
-
-    /* ...rest of your CSS remains unchanged... */
     main {
-      padding: 48px 12px 32px 12px;
+      padding: 42px 18px 32px 18px;
       max-width: 1100px;
       margin: auto;
     }
-
     .section {
-      background: #fff;
-      border-radius: 22px;
+      background: var(--color-white);
+      border-radius: var(--radius);
       padding: 36px 32px 32px 32px;
       margin-bottom: 38px;
-      box-shadow: 0 8px 28px rgba(67, 100, 247, 0.07), 0 1.5px 5px rgba(100,150,255,0.04);
-      transition: box-shadow 0.2s;
+      box-shadow: 0 8px 28px var(--color-shadow), 0 1.5px 5px rgba(100,150,255,0.03);
+      transition: box-shadow var(--transition);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
     }
-
     .section:hover {
-      box-shadow: 0 12px 36px rgba(67, 100, 247, 0.13), 0 2px 8px rgba(100,150,255,0.07);
+      box-shadow: 0 14px 36px rgba(67, 100, 247, 0.13), 0 2px 8px rgba(100,150,255,0.07);
     }
-
     h2, h3, h4 {
-      color: #4364f7;
+      color: var(--color-primary);
       margin-top: 0;
       font-weight: 700;
       letter-spacing: 0.5px;
     }
-
-    /* ...keep all your other styles unchanged... */
+    input[type="text"] {
+      padding: 13px 16px;
+      border: 1px solid #dbdbdb;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      width: 100%;
+      max-width: 350px;
+      margin-right: 12px;
+      margin-bottom: 8px;
+      transition: border-color var(--transition), box-shadow var(--transition);
+      background: #f7faff;
+      color: #232946;
+      outline: none;
+    }
+    input[type="text"]:focus {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 2px #e0e8ff;
+    }
+    button, #add-subject-btn {
+      background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+      color: white;
+      border: none;
+      padding: 12px 28px;
+      font-size: 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      box-shadow: 0 2px 12px var(--color-shadow);
+      transition: background var(--transition), transform var(--transition);
+      margin-top: 4px;
+      margin-bottom: 2px;
+    }
+    button:hover, #add-subject-btn:hover {
+      background: linear-gradient(90deg, #3350b7 0%, #5191e1 100%);
+      transform: translateY(-2px) scale(1.02);
+    }
+    #subjects-container {
+      width: 100%;
+    }
+    /* Responsive styles */
+    @media (max-width: 900px) {
+      main {
+        padding: 28px 4vw 20px 4vw;
+        max-width: 98vw;
+      }
+      .section {
+        padding: 24px 10px 18px 10px;
+        margin-bottom: 22px;
+        border-radius: 14px;
+      }
+      header h1 {
+        font-size: 2rem;
+      }
+    }
+    @media (max-width: 600px) {
+      header {
+        padding: 22px 0 16px 0;
+        border-bottom-left-radius: 16px;
+        border-bottom-right-radius: 16px;
+      }
+      header h1 {
+        font-size: 1.3rem;
+      }
+      #sign-out-btn {
+        top: 10px;
+        right: 10px;
+        padding: 8px 16px;
+        font-size: 0.92rem;
+      }
+      main {
+        padding: 8px 2vw 8px 2vw;
+        max-width: 100vw;
+      }
+      .section {
+        padding: 12px 4px 10px 4px;
+        margin-bottom: 14px;
+        border-radius: 8px;
+      }
+      input[type="text"], button, #add-subject-btn {
+        width: 100%;
+        max-width: 100%;
+        font-size: 1rem;
+        margin-bottom: 10px;
+        margin-right: 0;
+      }
+    }
+    /* Table responsiveness */
+    .section table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      background: #f9fbff;
+      border-radius: 6px;
+      overflow: auto;
+      font-size: 1rem;
+    }
+    .section th, .section td {
+      padding: 10px 8px;
+      border-bottom: 1px solid #e6e6e6;
+      text-align: center;
+    }
+    .section th {
+      background: #ebf1ff;
+      color: var(--color-primary);
+      font-weight: 700;
+    }
+    @media (max-width: 600px) {
+      .section table, .section thead, .section tbody, .section th, .section td, .section tr {
+        display: block;
+      }
+      .section tr {
+        margin-bottom: 12px;
+      }
+      .section td, .section th {
+        text-align: left;
+        padding: 8px 4px;
+        border: none;
+        border-bottom: 1px solid #f1f1f1;
+      }
+      .section th {
+        background: #ebf1ff;
+      }
+    }
+    /* Scrollbar styles for webkit browsers */
+    ::-webkit-scrollbar {
+      width: 7px;
+      background: #e3eeff;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--color-primary);
+      border-radius: 5px;
+    }
   </style>
 </head>
 <body>
@@ -91,14 +229,12 @@
     <h1>Teacher Dashboard</h1>
     <button id="sign-out-btn">Sign Out</button>
   </header>
-
   <main>
     <div class="section">
       <h2>Add New Subject</h2>
       <input type="text" id="subject-name" placeholder="Enter Subject Name" />
       <button id="add-subject-btn">Add Subject</button>
     </div>
-
     <div class="section">
       <h2>Your Subjects</h2>
       <div id="subjects-container">
@@ -106,7 +242,6 @@
       </div>
     </div>
   </main>
-
   <!-- Firebase App (the core Firebase SDK) -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -132,7 +267,7 @@
     // Sign out logic
     document.getElementById('sign-out-btn').onclick = function() {
       firebase.auth().signOut().then(function() {
-        window.location.href = "login.html"; // Redirects to login.html after sign out
+        window.location.href = "login.html";
       }).catch(function(error) {
         alert("Error signing out: " + error.message);
       });
