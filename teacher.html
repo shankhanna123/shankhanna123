@@ -4,31 +4,209 @@
   <title>Teacher Dashboard</title>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap" rel="stylesheet">
   <style>
-    /* ... [existing styles remain unchanged] ... */
-    .student-form {
-      background: #f9f9f9;
-      border-radius: 8px;
-      padding: 20px;
-      margin-top: 15px;
-      display: none;
+    body {
+      font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #e3eeff 0%, #f9faff 100%);
+      color: #222;
+      min-height: 100vh;
     }
+
+    header {
+      background: linear-gradient(90deg, #4364f7 0%, #6fb1fc 100%);
+      color: white;
+      padding: 32px 0 26px 0;
+      text-align: center;
+      box-shadow: 0 6px 28px rgba(67, 100, 247, 0.15);
+      border-bottom-left-radius: 40px;
+      border-bottom-right-radius: 40px;
+    }
+
+    header h1 {
+      font-size: 2.7rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin: 0;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+
+    main {
+      padding: 48px 12px 32px 12px;
+      max-width: 1100px;
+      margin: auto;
+    }
+
+    .section {
+      background: #fff;
+      border-radius: 22px;
+      padding: 36px 32px 32px 32px;
+      margin-bottom: 38px;
+      box-shadow: 0 8px 28px rgba(67, 100, 247, 0.07), 0 1.5px 5px rgba(100,150,255,0.04);
+      transition: box-shadow 0.2s;
+    }
+
+    .section:hover {
+      box-shadow: 0 12px 36px rgba(67, 100, 247, 0.13), 0 2px 8px rgba(100,150,255,0.07);
+    }
+
+    h2, h3, h4 {
+      color: #4364f7;
+      margin-top: 0;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 14px 14px;
+      margin: 12px 0 22px 0;
+      border: 1.6px solid #e5e9f2;
+      border-radius: 9px;
+      font-size: 1.02rem;
+      background: #f7faff;
+      font-family: inherit;
+      transition: border 0.2s;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border: 1.6px solid #8fb7fc;
+      background: #f2f7ff;
+    }
+
+    button, .small-btn {
+      background: linear-gradient(90deg, #4364f7 0%, #6fb1fc 100%);
+      color: white;
+      border: none;
+      padding: 13px 32px;
+      font-size: 1.07rem;
+      border-radius: 9px;
+      cursor: pointer;
+      font-weight: 600;
+      box-shadow: 0 2px 12px rgba(67, 100, 247, 0.08);
+      margin: 0 4px 10px 0;
+      transition: background 0.18s, transform 0.12s;
+    }
+
+    button:hover, .small-btn:hover {
+      background: linear-gradient(90deg, #3350b7 0%, #5191e1 100%);
+      transform: translateY(-2px) scale(1.03);
+    }
+
+    .small-btn {
+      padding: 8px 20px;
+      font-size: 0.98rem;
+      border-radius: 7px;
+      margin-top: 8px;
+    }
+
+    .subject-section {
+      margin-top: 24px;
+      border-top: 1.5px solid #e3e8f5;
+      padding-top: 26px;
+      margin-bottom: 18px;
+      background: linear-gradient(91deg, #f7fbff 55%, #ebf2fe 100%);
+      border-radius: 15px;
+      box-shadow: 0 2px 10px rgba(100,150,255,0.05);
+    }
+
+    .student-form {
+      background: #f4f8ff;
+      border-radius: 14px;
+      padding: 22px 24px 14px 24px;
+      margin-top: 18px;
+      box-shadow: 0 1px 8px rgba(67, 100, 247, 0.07);
+      display: none;
+      border: 1.5px solid #e5ecfd;
+      transition: box-shadow 0.2s;
+      position: relative;
+    }
+
+    .student-form h4 {
+      margin-bottom: 8px;
+      color: #1d4fb7;
+    }
+
+    .student-form-message {
+      margin-top: 10px;
+      color: #0c9923;
+      font-weight: 500;
+    }
+
+    .close-btn {
+      background: #e9ecf4;
+      color: #4b5c7a;
+      margin-left: 10px;
+      border: 1.5px solid #d0d6ee;
+      font-weight: 500;
+      box-shadow: none;
+      padding: 10px 18px;
+      border-radius: 7px;
+      transition: background 0.15s;
+    }
+    .close-btn:hover {
+      background: #d0d6ee;
+      color: #4364f7;
+    }
+
+    .student-list {
+      margin-top: 18px;
+    }
+
     .student-list-table {
       width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-top: 9px;
+      font-size: 0.99rem;
+      background: #fafdff;
+      border-radius: 11px;
+      overflow: hidden;
+      box-shadow: 0 1px 8px rgba(67, 100, 247, 0.04);
     }
     .student-list-table th, .student-list-table td {
-      border: 1px solid #ddd;
-      padding: 8px;
+      text-align: left;
+      padding: 11px 12px;
+      border-bottom: 1.5px solid #e6eaf3;
     }
     .student-list-table th {
-      background-color: #f1f1f1;
+      background: linear-gradient(90deg, #e8f0fe 60%, #f4f8ff 100%);
+      color: #3960bf;
+      font-weight: 700;
+      font-size: 1.01rem;
+      border-top: none;
     }
-    .close-btn {
-      background: #ccc;
-      color: #333;
-      margin-left: 10px;
+    .student-list-table tr:last-child td {
+      border-bottom: none;
+    }
+    .student-list-table td {
+      color: #2f3b50;
+    }
+
+    @media screen and (max-width: 900px) {
+      main {
+        padding: 20px 2vw;
+      }
+      .section {
+        padding: 26px 8px 22px 8px;
+      }
+      .student-form {
+        padding: 14px 3vw 10px 3vw;
+      }
+    }
+    @media screen and (max-width: 600px) {
+      header h1 {
+        font-size: 2rem;
+      }
+      .section {
+        padding: 13px 3px 12px 3px;
+      }
+      .student-list-table th, .student-list-table td {
+        padding: 7px 4px;
+        font-size: 0.91rem;
+      }
     }
   </style>
 </head>
@@ -36,12 +214,14 @@
   <header>
     <h1>Teacher Dashboard</h1>
   </header>
+
   <main>
     <div class="section">
       <h2>Add New Subject</h2>
       <input type="text" id="subject-name" placeholder="Enter Subject Name" />
       <button id="add-subject-btn">Add Subject</button>
     </div>
+
     <div class="section">
       <h2>Your Subjects</h2>
       <div id="subjects-container">
@@ -49,9 +229,12 @@
       </div>
     </div>
   </main>
+
+  <!-- Firebase App (the core Firebase SDK) -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyDt-pibaL2pMEu19Qgbcl4ir68W8lfqti8",
