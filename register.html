@@ -1,113 +1,101 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Register</title>
+  <meta charset="UTF-8">
+  <title>Student Registration</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f4f6f8;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .register-container {
-      background-color: white;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      width: 350px;
-      text-align: center;
+      padding: 20px;
+      max-width: 400px;
+      margin: auto;
     }
     h2 {
-      margin-bottom: 20px;
+      text-align: center;
     }
-    input, select {
+    input, button {
       width: 100%;
-      padding: 12px;
+      padding: 10px;
       margin: 10px 0;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-    button {
-      width: 100%;
-      padding: 12px;
-      margin-top: 15px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
       font-size: 16px;
     }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
     button:hover {
-      background-color: #0056b3;
+      background-color: #45a049;
     }
   </style>
 </head>
 <body>
-  <div class="register-container">
-    <h2>Register</h2>
-    <form id="registerForm">
-      <input type="text" id="name" placeholder="Full Name" required />
-      <input type="email" id="email" placeholder="Email" required />
-      <input type="password" id="password" placeholder="Password" required />
-      
-      <select id="role" required>
-        <option value="" disabled selected>Select Role</option>
-        <option value="teacher">Teacher</option>
-        <option value="student">Student</option>
-      </select>
+  <h2>Student Registration</h2>
+  <input type="text" id="name" placeholder="Enter your full name" required />
+  <input type="text" id="enrollment" placeholder="Enter enrollment number" required />
+  <input type="text" id="contact" placeholder="Enter contact number" required />
+  <button onclick="registerStudent()">Register</button>
+  <p id="statusMessage"></p>
 
-      <button type="submit">Register</button>
-    </form>
-  </div>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js"></script>
 
-  <script type="module">
-    import { auth, db } from './firebase.js';
-    import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { set, ref } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  <!-- Firebase Config -->
+  <script src="firebase-config.js"></script>
 
-    const registerForm = document.getElementById("registerForm");
+  <script>
+    // Utility: Generate random 6-char alphanumeric password
+    function generateRandomPassword() {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      let password = '';
+      for (let i = 0; i < 6; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return password;
+    }
 
-    registerForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
+    async function registerStudent() {
+      const name = document.getElementById('name').value.trim();
+      const enrollment = document.getElementById('enrollment').value.trim();
+      const contact = document.getElementById('contact').value.trim();
+      const statusMessage = document.getElementById('statusMessage');
 
-      const name = document.getElementById("name").value.trim();
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
-      const role = document.getElementById("role").value;
-
-      if (!name || !email || !password || !role) {
-        alert("Please fill in all fields");
+      if (!name || !enrollment || !contact) {
+        alert("Please fill in all fields.");
         return;
       }
 
-      try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
+      const email = enrollment + "@college.com";  // Used for Firebase Auth
+      const password = generateRandomPassword();
 
-        // Store user info in appropriate section
-        const userRef = ref(db, `${role}s/${user.uid}`);
-        await set(userRef, {
+      try {
+        // Create user in Firebase Auth
+        await firebase.auth().createUserWithEmailAndPassword(email, password);
+
+        // Save student info in Realtime Database
+        await firebase.database().ref('students/' + enrollment).set({
           name: name,
-          email: email,
-          role: role
+          contact: contact,
+          enrollment: enrollment,
+          password: password // optional: remove this if you don't want to store it
         });
 
-        alert("Registration successful! Redirecting to login...");
-        if (role === "teacher") {
-          window.location.href = "teacher-login.html";
-        } else {
-          window.location.href = "student-login.html";
-        }
+        statusMessage.innerText = `✅ Registration successful! Your generated password is: ${password}`;
+        statusMessage.style.color = "green";
+
+        // Clear form
+        document.getElementById('name').value = '';
+        document.getElementById('enrollment').value = '';
+        document.getElementById('contact').value = '';
       } catch (error) {
-        alert("Registration failed: " + error.message);
+        console.error("Error registering student:", error);
+        statusMessage.innerText = `❌ Registration failed: ${error.message}`;
+        statusMessage.style.color = "red";
       }
-    });
+    }
   </script>
 </body>
 </html>
