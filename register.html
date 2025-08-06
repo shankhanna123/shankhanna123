@@ -33,7 +33,7 @@
     }
     #statusMessage {
       font-size: 16px;
-      margin-top: 20px;
+      margin-bottom: 20px;
       padding: 10px;
       background: #f0f0f0;
       border-left: 5px solid green;
@@ -43,6 +43,10 @@
   </style>
 </head>
 <body>
+
+  <!-- ✅ Message now appears at the top -->
+  <p id="statusMessage"></p>
+
   <h2>Student Registration</h2>
   <input type="text" id="name" placeholder="Enter your full name" required />
   <input type="text" id="enrollment" placeholder="Enter enrollment number" required />
@@ -55,8 +59,6 @@
   <input type="email" id="teacherEmail" placeholder="Enter teacher email" required />
   <input type="password" id="teacherPassword" placeholder="Enter password" required />
   <button class="secondary" onclick="registerTeacher()">Register as Teacher</button>
-
-  <p id="statusMessage"></p>
 
   <!-- Firebase Modular SDK -->
   <script type="module">
