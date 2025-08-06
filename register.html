@@ -38,6 +38,7 @@
       background: #f0f0f0;
       border-left: 5px solid green;
       white-space: pre-wrap;
+      color: black;
     }
   </style>
 </head>
@@ -57,7 +58,7 @@
 
   <p id="statusMessage"></p>
 
-  <!-- Firebase SDK -->
+  <!-- Firebase Modular SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
@@ -87,7 +88,6 @@
       return password;
     }
 
-    // ✅ STUDENT REGISTRATION FUNCTION
     window.registerStudent = async function () {
       const name = document.getElementById('name').value.trim();
       const enrollment = document.getElementById('enrollment').value.trim();
@@ -112,14 +112,11 @@
           password: password
         });
 
-        statusMessage.innerHTML = `
-✅ Student registered successfully!
-User ID: ${enrollment}
-Password: ${password}
-        `;
-        statusMessage.style.color = "black";
+        statusMessage.innerHTML =
+          "✅ Student registered successfully!\n" +
+          "User ID: " + enrollment + "\n" +
+          "Password: " + password;
 
-        // Clear form
         document.getElementById('name').value = '';
         document.getElementById('enrollment').value = '';
         document.getElementById('contact').value = '';
@@ -130,7 +127,6 @@ Password: ${password}
       }
     };
 
-    // ✅ TEACHER REGISTRATION FUNCTION
     window.registerTeacher = async function () {
       const name = document.getElementById('teacherName').value.trim();
       const email = document.getElementById('teacherEmail').value.trim();
@@ -151,7 +147,7 @@ Password: ${password}
           role: 'teacher'
         });
 
-        statusMessage.innerHTML = `✅ Teacher registered successfully!`;
+        statusMessage.innerText = `✅ Teacher registered successfully!`;
         statusMessage.style.color = "green";
 
         document.getElementById('teacherName').value = '';
