@@ -47,10 +47,10 @@
 </head>
 <body>
 
-  <!-- ✅ Output message on top -->
+  <!-- ✅ Success message on top -->
   <p id="statusMessage"></p>
 
-  <!-- ✅ Profile selection dropdown -->
+  <!-- ✅ Profile Dropdown -->
   <label for="profile">Select Profile:</label>
   <select id="profile" onchange="toggleForm()">
     <option value="">-- Select --</option>
@@ -58,25 +58,27 @@
     <option value="teacher">Teacher</option>
   </select>
 
-  <!-- ✅ Student Registration Section -->
+  <!-- ✅ Student Registration -->
   <div id="studentSection" class="section">
     <h2>Student Registration</h2>
     <input type="text" id="name" placeholder="Enter your full name" required />
     <input type="text" id="enrollment" placeholder="Enter enrollment number" required />
+    <input type="email" id="studentEmail" placeholder="Enter your email ID" required />
     <input type="text" id="contact" placeholder="Enter contact number" required />
     <button onclick="registerStudent()">Register as Student</button>
   </div>
 
-  <!-- ✅ Teacher Registration Section -->
+  <!-- ✅ Teacher Registration -->
   <div id="teacherSection" class="section">
     <h2>Teacher Registration</h2>
     <input type="text" id="teacherName" placeholder="Enter teacher name" required />
     <input type="email" id="teacherEmail" placeholder="Enter teacher email" required />
+    <input type="text" id="teacherContact" placeholder="Enter contact number" required />
     <input type="password" id="teacherPassword" placeholder="Enter password" required />
     <button class="secondary" onclick="registerTeacher()">Register as Teacher</button>
   </div>
 
-  <!-- Firebase Modular SDK -->
+  <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
@@ -97,7 +99,6 @@
     const auth = getAuth(app);
     const db = getDatabase(app);
 
-    // ✅ Toggle form sections based on dropdown
     window.toggleForm = function () {
       const selected = document.getElementById("profile").value;
       document.getElementById("studentSection").style.display = selected === "student" ? "block" : "none";
@@ -114,18 +115,20 @@
       return password;
     }
 
+    // ✅ Student Registration
     window.registerStudent = async function () {
       const name = document.getElementById('name').value.trim();
       const enrollment = document.getElementById('enrollment').value.trim();
+      const emailInput = document.getElementById('studentEmail').value.trim();
       const contact = document.getElementById('contact').value.trim();
       const statusMessage = document.getElementById('statusMessage');
 
-      if (!name || !enrollment || !contact) {
+      if (!name || !enrollment || !emailInput || !contact) {
         alert("Please fill in all student fields.");
         return;
       }
 
-      const email = enrollment + "@college.com";
+      const email = enrollment + "@college.com";  // used for Firebase Auth
       const password = generateRandomPassword();
 
       try {
@@ -133,8 +136,9 @@
 
         await set(ref(db, 'students/' + enrollment), {
           name: name,
-          contact: contact,
           enrollment: enrollment,
+          contact: contact,
+          email: emailInput,
           password: password
         });
 
@@ -145,6 +149,7 @@
 
         document.getElementById('name').value = '';
         document.getElementById('enrollment').value = '';
+        document.getElementById('studentEmail').value = '';
         document.getElementById('contact').value = '';
       } catch (error) {
         console.error("Student registration error:", error);
@@ -153,13 +158,15 @@
       }
     };
 
+    // ✅ Teacher Registration
     window.registerTeacher = async function () {
       const name = document.getElementById('teacherName').value.trim();
       const email = document.getElementById('teacherEmail').value.trim();
+      const contact = document.getElementById('teacherContact').value.trim();
       const password = document.getElementById('teacherPassword').value.trim();
       const statusMessage = document.getElementById('statusMessage');
 
-      if (!name || !email || !password) {
+      if (!name || !email || !contact || !password) {
         alert("Please fill in all teacher fields.");
         return;
       }
@@ -170,6 +177,7 @@
         await set(ref(db, 'teachers/' + result.user.uid), {
           name: name,
           email: email,
+          contact: contact,
           role: 'teacher'
         });
 
@@ -178,6 +186,7 @@
 
         document.getElementById('teacherName').value = '';
         document.getElementById('teacherEmail').value = '';
+        document.getElementById('teacherContact').value = '';
         document.getElementById('teacherPassword').value = '';
       } catch (error) {
         console.error("Teacher registration error:", error);
