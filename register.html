@@ -51,103 +51,109 @@
 
   <!-- Firebase SDK -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+  import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDt-pibaL2pMEu19Qgbcl4ir68W8lfqti8",
-      authDomain: "attendance-d7de7.firebaseapp.com",
-      databaseURL: "https://attendance-d7de7-default-rtdb.firebaseio.com",
-      projectId: "attendance-d7de7",
-      storageBucket: "attendance-d7de7.appspot.com",
-      messagingSenderId: "470494624998",
-      appId: "1:470494624998:web:be5b5bdfb9b515d079cf27",
-      measurementId: "G-VML3R5N55W"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyDt-pibaL2pMEu19Qgbcl4ir68W8lfqti8",
+    authDomain: "attendance-d7de7.firebaseapp.com",
+    databaseURL: "https://attendance-d7de7-default-rtdb.firebaseio.com",
+    projectId: "attendance-d7de7",
+    storageBucket: "attendance-d7de7.appspot.com",
+    messagingSenderId: "470494624998",
+    appId: "1:470494624998:web:be5b5bdfb9b515d079cf27",
+    measurementId: "G-VML3R5N55W"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getDatabase(app);
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getDatabase(app);
 
-    function generateRandomPassword() {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-      let password = '';
-      for (let i = 0; i < 6; i++) {
-        password += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      return password;
+  function generateRandomPassword() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let password = '';
+    for (let i = 0; i < 6; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+  }
+
+  // STUDENT REGISTRATION
+  window.registerStudent = async function () {
+    const name = document.getElementById('name').value.trim();
+    const enrollment = document.getElementById('enrollment').value.trim();
+    const contact = document.getElementById('contact').value.trim();
+    const statusMessage = document.getElementById('statusMessage');
+
+    if (!name || !enrollment || !contact) {
+      alert("Please fill in all student fields.");
+      return;
     }
 
-    window.registerStudent = async function () {
-      const name = document.getElementById('name').value.trim();
-      const enrollment = document.getElementById('enrollment').value.trim();
-      const contact = document.getElementById('contact').value.trim();
-      const statusMessage = document.getElementById('statusMessage');
+    const email = enrollment + "@college.com";
+    const password = generateRandomPassword();
 
-      if (!name || !enrollment || !contact) {
-        alert("Please fill in all student fields.");
-        return;
-      }
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
 
-      const email = enrollment + "@college.com";
-      const password = generateRandomPassword();
+      await set(ref(db, 'students/' + enrollment), {
+        name: name,
+        contact: contact,
+        enrollment: enrollment,
+        password: password
+      });
 
-      try {
-        await createUserWithEmailAndPassword(auth, email, password);
+      statusMessage.innerHTML = `
+        ✅ <b>Student registered successfully!</b><br>
+        <strong>User ID:</strong> ${enrollment}<br>
+        <strong>Password:</strong> ${password}
+      `;
+      statusMessage.style.color = "green";
 
-        await set(ref(db, 'students/' + enrollment), {
-          name: name,
-          contact: contact,
-          enrollment: enrollment,
-          password: password
-        });
+      document.getElementById('name').value = '';
+      document.getElementById('enrollment').value = '';
+      document.getElementById('contact').value = '';
+    } catch (error) {
+      console.error("Student registration error:", error);
+      statusMessage.innerText = `❌ Student registration failed: ${error.message}`;
+      statusMessage.style.color = "red";
+    }
+  };
 
-        statusMessage.innerText = `✅ Student registered! Your password is: ${password}`;
-        statusMessage.style.color = "green";
+  // TEACHER REGISTRATION
+  window.registerTeacher = async function () {
+    const name = document.getElementById('teacherName').value.trim();
+    const email = document.getElementById('teacherEmail').value.trim();
+    const password = document.getElementById('teacherPassword').value.trim();
+    const statusMessage = document.getElementById('statusMessage');
 
-        document.getElementById('name').value = '';
-        document.getElementById('enrollment').value = '';
-        document.getElementById('contact').value = '';
-      } catch (error) {
-        console.error("Student registration error:", error);
-        statusMessage.innerText = `❌ Student registration failed: ${error.message}`;
-        statusMessage.style.color = "red";
-      }
-    };
+    if (!name || !email || !password) {
+      alert("Please fill in all teacher fields.");
+      return;
+    }
 
-    window.registerTeacher = async function () {
-      const name = document.getElementById('teacherName').value.trim();
-      const email = document.getElementById('teacherEmail').value.trim();
-      const password = document.getElementById('teacherPassword').value.trim();
-      const statusMessage = document.getElementById('statusMessage');
+    try {
+      const result = await createUserWithEmailAndPassword(auth, email, password);
 
-      if (!name || !email || !password) {
-        alert("Please fill in all teacher fields.");
-        return;
-      }
+      await set(ref(db, 'teachers/' + result.user.uid), {
+        name: name,
+        email: email,
+        role: 'teacher'
+      });
 
-      try {
-        const result = await createUserWithEmailAndPassword(auth, email, password);
+      statusMessage.innerText = `✅ Teacher registered successfully!`;
+      statusMessage.style.color = "green";
 
-        await set(ref(db, 'teachers/' + result.user.uid), {
-          name: name,
-          email: email,
-          role: 'teacher'
-        });
-
-        statusMessage.innerText = `✅ Teacher registered successfully!`;
-        statusMessage.style.color = "green";
-
-        document.getElementById('teacherName').value = '';
-        document.getElementById('teacherEmail').value = '';
-        document.getElementById('teacherPassword').value = '';
-      } catch (error) {
-        console.error("Teacher registration error:", error);
-        statusMessage.innerText = `❌ Teacher registration failed: ${error.message}`;
-        statusMessage.style.color = "red";
-      }
-    };
-  </script>
+      document.getElementById('teacherName').value = '';
+      document.getElementById('teacherEmail').value = '';
+      document.getElementById('teacherPassword').value = '';
+    } catch (error) {
+      console.error("Teacher registration error:", error);
+      statusMessage.innerText = `❌ Teacher registration failed: ${error.message}`;
+      statusMessage.style.color = "red";
+    }
+  };
+</script>
 </body>
 </html>
