@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Student Registration</title>
+  <title>Registration Portal</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
-      max-width: 400px;
+      max-width: 450px;
       margin: auto;
     }
     h2 {
@@ -25,8 +25,11 @@
       border: none;
       cursor: pointer;
     }
+    button.secondary {
+      background-color: #2196F3;
+    }
     button:hover {
-      background-color: #45a049;
+      opacity: 0.9;
     }
   </style>
 </head>
@@ -35,19 +38,38 @@
   <input type="text" id="name" placeholder="Enter your full name" required />
   <input type="text" id="enrollment" placeholder="Enter enrollment number" required />
   <input type="text" id="contact" placeholder="Enter contact number" required />
-  <button onclick="registerStudent()">Register</button>
+  <button onclick="registerStudent()">Register as Student</button>
+
+  <hr style="margin: 30px 0;">
+  <h2>Teacher Registration</h2>
+  <input type="text" id="teacherName" placeholder="Enter teacher name" required />
+  <input type="email" id="teacherEmail" placeholder="Enter teacher email" required />
+  <input type="password" id="teacherPassword" placeholder="Enter password" required />
+  <button class="secondary" onclick="registerTeacher()">Register as Teacher</button>
+
   <p id="statusMessage"></p>
 
   <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
 
-  <!-- Firebase Config -->
-  <script src="firebase-config.js"></script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDt-pibaL2pMEu19Qgbcl4ir68W8lfqti8",
+      authDomain: "attendance-d7de7.firebaseapp.com",
+      databaseURL: "https://attendance-d7de7-default-rtdb.firebaseio.com",
+      projectId: "attendance-d7de7",
+      storageBucket: "attendance-d7de7.appspot.com",
+      messagingSenderId: "470494624998",
+      appId: "1:470494624998:web:be5b5bdfb9b515d079cf27",
+      measurementId: "G-VML3R5N55W"
+    };
 
-  <script>
-    // Utility: Generate random 6-char alphanumeric password
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
     function generateRandomPassword() {
       const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
       let password = '';
@@ -57,45 +79,75 @@
       return password;
     }
 
-    async function registerStudent() {
+    window.registerStudent = async function () {
       const name = document.getElementById('name').value.trim();
       const enrollment = document.getElementById('enrollment').value.trim();
       const contact = document.getElementById('contact').value.trim();
       const statusMessage = document.getElementById('statusMessage');
 
       if (!name || !enrollment || !contact) {
-        alert("Please fill in all fields.");
+        alert("Please fill in all student fields.");
         return;
       }
 
-      const email = enrollment + "@college.com";  // Used for Firebase Auth
+      const email = enrollment + "@college.com";
       const password = generateRandomPassword();
 
       try {
-        // Create user in Firebase Auth
-        await firebase.auth().createUserWithEmailAndPassword(email, password);
+        await createUserWithEmailAndPassword(auth, email, password);
 
-        // Save student info in Realtime Database
-        await firebase.database().ref('students/' + enrollment).set({
+        await set(ref(db, 'students/' + enrollment), {
           name: name,
           contact: contact,
           enrollment: enrollment,
-          password: password // optional: remove this if you don't want to store it
+          password: password
         });
 
-        statusMessage.innerText = `✅ Registration successful! Your generated password is: ${password}`;
+        statusMessage.innerText = `✅ Student registered! Your password is: ${password}`;
         statusMessage.style.color = "green";
 
-        // Clear form
         document.getElementById('name').value = '';
         document.getElementById('enrollment').value = '';
         document.getElementById('contact').value = '';
       } catch (error) {
-        console.error("Error registering student:", error);
-        statusMessage.innerText = `❌ Registration failed: ${error.message}`;
+        console.error("Student registration error:", error);
+        statusMessage.innerText = `❌ Student registration failed: ${error.message}`;
         statusMessage.style.color = "red";
       }
-    }
+    };
+
+    window.registerTeacher = async function () {
+      const name = document.getElementById('teacherName').value.trim();
+      const email = document.getElementById('teacherEmail').value.trim();
+      const password = document.getElementById('teacherPassword').value.trim();
+      const statusMessage = document.getElementById('statusMessage');
+
+      if (!name || !email || !password) {
+        alert("Please fill in all teacher fields.");
+        return;
+      }
+
+      try {
+        const result = await createUserWithEmailAndPassword(auth, email, password);
+
+        await set(ref(db, 'teachers/' + result.user.uid), {
+          name: name,
+          email: email,
+          role: 'teacher'
+        });
+
+        statusMessage.innerText = `✅ Teacher registered successfully!`;
+        statusMessage.style.color = "green";
+
+        document.getElementById('teacherName').value = '';
+        document.getElementById('teacherEmail').value = '';
+        document.getElementById('teacherPassword').value = '';
+      } catch (error) {
+        console.error("Teacher registration error:", error);
+        statusMessage.innerText = `❌ Teacher registration failed: ${error.message}`;
+        statusMessage.style.color = "red";
+      }
+    };
   </script>
 </body>
 </html>
