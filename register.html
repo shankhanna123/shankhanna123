@@ -44,6 +44,12 @@
       display: none;
     }
   </style>
+
+  <!-- ✅ EmailJS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <script>
+    emailjs.init("pIbIQdDwrwrSySJBE"); // your public key
+  </script>
 </head>
 <body>
 
@@ -64,7 +70,7 @@
     <input type="text" id="name" placeholder="Enter your full name" required />
     <input type="text" id="enrollment" placeholder="Enter enrollment number" required />
     <input type="email" id="studentEmail" placeholder="Enter your email ID" required />
-    <input type="text" id="contact" placeholder="Enter contact number" required />
+    <input type="text" id="contact" placeholder="Enter WhatsApp number (with country code)" required />
     <button onclick="registerStudent()">Register as Student</button>
   </div>
 
@@ -78,7 +84,7 @@
     <button class="secondary" onclick="registerTeacher()">Register as Teacher</button>
   </div>
 
-  <!-- Firebase SDK -->
+  <!-- Firebase Modular SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
@@ -115,7 +121,6 @@
       return password;
     }
 
-    // ✅ Student Registration
     window.registerStudent = async function () {
       const name = document.getElementById('name').value.trim();
       const enrollment = document.getElementById('enrollment').value.trim();
@@ -128,7 +133,7 @@
         return;
       }
 
-      const email = enrollment + "@college.com";  // used for Firebase Auth
+      const email = enrollment + "@college.com";
       const password = generateRandomPassword();
 
       try {
@@ -142,11 +147,30 @@
           password: password
         });
 
+        // ✅ Show on screen
         statusMessage.innerHTML =
           "✅ Student registered successfully!\n" +
           "User ID: " + enrollment + "\n" +
           "Password: " + password;
 
+        // ✅ Send email using EmailJS
+        emailjs.send("service_bhbst6e", "template_qhc3mk2", {
+          name: name,
+          user_id: enrollment,
+          password: password,
+          to_email: emailInput
+        }).then(() => {
+          console.log("📧 Email sent!");
+        }).catch(err => {
+          console.error("❌ Email error:", err);
+        });
+
+        // ✅ Open WhatsApp pre-filled message
+        const msg = `Hello ${name}, your User ID is ${enrollment} and your password is ${password}`;
+        const link = `https://wa.me/${contact}?text=${encodeURIComponent(msg)}`;
+        window.open(link, '_blank');
+
+        // ✅ Clear form
         document.getElementById('name').value = '';
         document.getElementById('enrollment').value = '';
         document.getElementById('studentEmail').value = '';
@@ -158,7 +182,6 @@
       }
     };
 
-    // ✅ Teacher Registration
     window.registerTeacher = async function () {
       const name = document.getElementById('teacherName').value.trim();
       const email = document.getElementById('teacherEmail').value.trim();
