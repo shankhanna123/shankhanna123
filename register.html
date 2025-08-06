@@ -13,7 +13,7 @@
     h2 {
       text-align: center;
     }
-    input, button {
+    select, input, button {
       width: 100%;
       padding: 10px;
       margin: 10px 0;
@@ -40,25 +40,41 @@
       white-space: pre-wrap;
       color: black;
     }
+    .section {
+      display: none;
+    }
   </style>
 </head>
 <body>
 
-  <!-- ✅ Message now appears at the top -->
+  <!-- ✅ Output message on top -->
   <p id="statusMessage"></p>
 
-  <h2>Student Registration</h2>
-  <input type="text" id="name" placeholder="Enter your full name" required />
-  <input type="text" id="enrollment" placeholder="Enter enrollment number" required />
-  <input type="text" id="contact" placeholder="Enter contact number" required />
-  <button onclick="registerStudent()">Register as Student</button>
+  <!-- ✅ Profile selection dropdown -->
+  <label for="profile">Select Profile:</label>
+  <select id="profile" onchange="toggleForm()">
+    <option value="">-- Select --</option>
+    <option value="student">Student</option>
+    <option value="teacher">Teacher</option>
+  </select>
 
-  <hr style="margin: 30px 0;">
-  <h2>Teacher Registration</h2>
-  <input type="text" id="teacherName" placeholder="Enter teacher name" required />
-  <input type="email" id="teacherEmail" placeholder="Enter teacher email" required />
-  <input type="password" id="teacherPassword" placeholder="Enter password" required />
-  <button class="secondary" onclick="registerTeacher()">Register as Teacher</button>
+  <!-- ✅ Student Registration Section -->
+  <div id="studentSection" class="section">
+    <h2>Student Registration</h2>
+    <input type="text" id="name" placeholder="Enter your full name" required />
+    <input type="text" id="enrollment" placeholder="Enter enrollment number" required />
+    <input type="text" id="contact" placeholder="Enter contact number" required />
+    <button onclick="registerStudent()">Register as Student</button>
+  </div>
+
+  <!-- ✅ Teacher Registration Section -->
+  <div id="teacherSection" class="section">
+    <h2>Teacher Registration</h2>
+    <input type="text" id="teacherName" placeholder="Enter teacher name" required />
+    <input type="email" id="teacherEmail" placeholder="Enter teacher email" required />
+    <input type="password" id="teacherPassword" placeholder="Enter password" required />
+    <button class="secondary" onclick="registerTeacher()">Register as Teacher</button>
+  </div>
 
   <!-- Firebase Modular SDK -->
   <script type="module">
@@ -80,6 +96,14 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
+
+    // ✅ Toggle form sections based on dropdown
+    window.toggleForm = function () {
+      const selected = document.getElementById("profile").value;
+      document.getElementById("studentSection").style.display = selected === "student" ? "block" : "none";
+      document.getElementById("teacherSection").style.display = selected === "teacher" ? "block" : "none";
+      document.getElementById("statusMessage").innerHTML = "";
+    };
 
     function generateRandomPassword() {
       const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
