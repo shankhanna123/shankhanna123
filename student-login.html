@@ -199,6 +199,11 @@
       debugDiv.style.display = 'block';
     }
 
+    function getTodayDate() {
+      const today = new Date();
+      return today.toISOString().slice(0, 10);
+    }
+
     // Login functionality
     document.getElementById('login-btn').addEventListener('click', function() {
       const enrollment = document.getElementById('enrollment-input').value.trim();
@@ -245,141 +250,95 @@
         });
     });
 
-    // Enhanced attendance checking with multiple database paths
+    // Corrected attendance checking that matches teacher's database structure
     function checkForActiveAttendance() {
       if (!loggedInStudent) return;
 
       debugLog('Starting attendance check for student:', loggedInStudent.enrollment);
 
-      // Check multiple possible database paths where teacher might store attendance
-      const possiblePaths = [
-        'attendance',
-        'attendanceSessions', 
-        'activeAttendance',
-        'sessions',
-        'teacherSessions',
-        'subjects'
-      ];
+      // Check the correct path where teacher stores attendance codes: subjects/{subjectKey}/attendanceCode
+      database.ref('subjects').on('value', snapshot => {
+        if (!snapshot.exists()) {
+          showMessage('attendance-message', 
+            '📋 No subjects found. Please wait for your teacher to set up subjects.', 
+            'info');
+          return;
+        }
 
-      // First, let's see what's in the root of the database
-      database.ref().once('value').then(rootSnapshot => {
-        debugLog('Database root keys:', Object.keys(rootSnapshot.val() || {}));
-        
-        // Check each possible path
-        checkAttendancePaths(possiblePaths, 0);
-      });
+        let foundActiveSession = false;
+        const subjects = snapshot.val();
 
-      // Also listen for real-time changes on all possible paths
-      possiblePaths.forEach(path => {
-        database.ref(path).on('value', snapshot => {
-          if (snapshot.exists()) {
-            debugLog(`Found data at path: ${path}`, snapshot.val());
-            processAttendanceData(snapshot.val(), path);
+        // Check each subject for active attendance codes
+        for (let subjectKey in subjects) {
+          const subject = subjects[subjectKey];
+          
+          // Check if this subject has an active attendance code
+          if (subject.attendanceCode && subject.attendanceCode.code && subject.attendanceCode.expiry) {
+            const now = Date.now();
+            
+            // Check if the code is still valid (not expired)
+            if (subject.attendanceCode.expiry > now) {
+              // Check if student is enrolled in this subject
+              if (subject.students && subject.students[loggedInStudent.enrollment]) {
+                foundActiveSession = true;
+                
+                currentActiveSession = {
+                  id: subjectKey,
+                  path: 'subjects',
+                  code: subject.attendanceCode.code,
+                  endTime: subject.attendanceCode.expiry,
+                  subject: subject.name || subjectKey,
+                  isActive: true
+                };
+
+                const subjectName = subject.name || subjectKey;
+                showMessage('attendance-message', 
+                  `✅ Active session: ${subjectName}. Enter the code provided by your teacher.`, 
+                  'info');
+                
+                document.getElementById('session-info').innerHTML = 
+                  `<strong>Subject:</strong> ${subjectName}`;
+                document.getElementById('session-info').style.display = 'block';
+
+                startAttendanceTimer(subject.attendanceCode.expiry);
+                checkAttendanceStatus(subjectKey);
+                break;
+              }
+            }
           }
-        });
-      });
-    }
+        }
 
-    function checkAttendancePaths(paths, index) {
-      if (index >= paths.length) {
-        // If no active sessions found in any path, show waiting message
-        if (!currentActiveSession) {
+        if (!foundActiveSession) {
+          currentActiveSession = null;
           showMessage('attendance-message', 
             '⏳ No active attendance session found. Waiting for teacher to start...', 
             'info');
+          document.getElementById('session-info').style.display = 'none';
+          clearAttendanceTimer();
         }
-        return;
-      }
-
-      const currentPath = paths[index];
-      debugLog(`Checking path: ${currentPath}`);
-
-      database.ref(currentPath).once('value')
-        .then(snapshot => {
-          if (snapshot.exists()) {
-            debugLog(`Data found at ${currentPath}:`, snapshot.val());
-            const foundSession = processAttendanceData(snapshot.val(), currentPath);
-            if (!foundSession) {
-              checkAttendancePaths(paths, index + 1);
-            }
-          } else {
-            debugLog(`No data at path: ${currentPath}`);
-            checkAttendancePaths(paths, index + 1);
-          }
-        })
-        .catch(error => {
-          debugLog(`Error checking path ${currentPath}:`, error.message);
-          checkAttendancePaths(paths, index + 1);
-        });
+      });
     }
 
-    function processAttendanceData(data, pathName) {
-      if (!data) return false;
-
-      currentActiveSession = null;
-      
-      // Handle different data structures
-      for (let sessionId in data) {
-        const session = data[sessionId];
-        
-        // Check various possible session structures
-        const isActive = session.isActive || 
-                         session.active || 
-                         session.status === 'active' ||
-                         session.state === 'active' ||
-                         (session.endTime && session.endTime > Date.now());
-
-        if (isActive) {
-          currentActiveSession = { 
-            id: sessionId, 
-            path: pathName,
-            ...session 
-          };
-          
-          debugLog('Found active session:', currentActiveSession);
-          
-          const teacherName = session.teacherName || session.teacher || session.createdBy || 'Your Teacher';
-          const subject = session.subject || session.subjectName || session.className || 'Class';
-          
-          showMessage('attendance-message', 
-            `✅ Active session: ${subject} by ${teacherName}`, 
-            'info');
-          
-          document.getElementById('session-info').innerHTML = 
-            `<strong>Subject:</strong> ${subject}<br><strong>Teacher:</strong> ${teacherName}`;
-          document.getElementById('session-info').style.display = 'block';
-
-          if (session.endTime) {
-            startAttendanceTimer(session.endTime);
-          }
-          
-          checkAttendanceStatus(sessionId, pathName);
-          return true;
-        }
-      }
-      
-      return false;
-    }
-
-    function checkAttendanceStatus(sessionId, pathName) {
+    function checkAttendanceStatus(subjectKey) {
       if (!loggedInStudent) return;
 
-      const attendanceRef = database.ref(`${pathName}/${sessionId}/students/${loggedInStudent.enrollment}`);
+      const today = getTodayDate();
+      const attendanceRef = database.ref(`attendance/${subjectKey}/${today}/${loggedInStudent.enrollment}`);
       
       attendanceRef.once('value').then(snapshot => {
         if (snapshot.exists()) {
-          const attendanceRecord = snapshot.val();
-          showMessage('attendance-message', 
-            `✅ Attendance already marked at ${new Date(attendanceRecord.timestamp).toLocaleTimeString()}`, 
-            'success');
-          document.getElementById('submit-attendance-btn').disabled = true;
-          document.getElementById('submit-attendance-btn').textContent = 'Attendance Marked ✓';
+          const status = snapshot.val().status;
+          if (status === 'present') {
+            showMessage('attendance-message', 
+              `✅ Attendance already marked as Present for today`, 
+              'success');
+            document.getElementById('submit-attendance-btn').disabled = true;
+            document.getElementById('submit-attendance-btn').textContent = 'Attendance Marked ✓';
+          }
         } else {
           document.getElementById('submit-attendance-btn').disabled = false;
           document.getElementById('submit-attendance-btn').textContent = '✓ Submit Attendance';
         }
-      }).catch(error => {
-        debugLog('Error checking attendance status:', error.message);
       });
     }
 
@@ -412,7 +371,7 @@
       document.getElementById('attendance-timer').textContent = '';
     }
 
-    // Attendance submission with enhanced error handling
+    // Attendance submission with corrected database structure
     document.getElementById('submit-attendance-btn').addEventListener('click', function() {
       const codeInput = document.getElementById('attendance-code-input').value.trim().toUpperCase();
       const submitBtn = document.getElementById('submit-attendance-btn');
@@ -438,23 +397,13 @@
       debugLog('Submitting code:', codeInput);
       debugLog('Session code:', currentActiveSession.code);
 
-      // Try different possible code formats
-      const sessionCode = (currentActiveSession.code || currentActiveSession.attendanceCode || 
-                          currentActiveSession.sessionCode || '').toString().toUpperCase();
-
-      if (codeInput === sessionCode) {
-        // Mark attendance
-        const attendanceRecord = {
-          studentName: loggedInStudent.name,
-          enrollment: loggedInStudent.enrollment,
-          timestamp: Date.now(),
-          status: 'present',
-          submittedCode: codeInput
-        };
-
-        const attendancePath = `${currentActiveSession.path}/${currentActiveSession.id}/students/${loggedInStudent.enrollment}`;
+      // Check if the code matches
+      if (codeInput === currentActiveSession.code) {
+        const today = getTodayDate();
         
-        database.ref(attendancePath).set(attendanceRecord)
+        // Mark attendance in the same structure as teacher expects
+        database.ref(`attendance/${currentActiveSession.id}/${today}/${loggedInStudent.enrollment}`)
+          .set({ status: 'present' })
           .then(() => {
             showMessage('attendance-message', 
               '🎉 Attendance marked successfully! You are present.', 
@@ -462,15 +411,9 @@
             submitBtn.textContent = 'Attendance Marked ✓';
             document.getElementById('attendance-code-input').value = '';
             submitBtn.disabled = true;
-            
-            // Also update attendance count if it exists
-            const countRef = database.ref(`${currentActiveSession.path}/${currentActiveSession.id}/attendanceCount`);
-            countRef.transaction(currentCount => (currentCount || 0) + 1);
-            
           })
           .catch(error => {
             console.error('Error marking attendance:', error);
-            debugLog('Attendance submission error:', error.message);
             showMessage('attendance-message', 
               'Failed to mark attendance. Please try again.', 
               'error');
@@ -481,7 +424,7 @@
         showMessage('attendance-message', 
           'Invalid code. Please check with your teacher and try again.', 
           'error');
-        debugLog('Code mismatch. Expected:', sessionCode, 'Got:', codeInput);
+        debugLog('Code mismatch. Expected:', currentActiveSession.code, 'Got:', codeInput);
         submitBtn.disabled = false;
         submitBtn.textContent = '✓ Submit Attendance';
       }
