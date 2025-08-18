@@ -132,6 +132,8 @@
       border-radius: 8px;
       font-size: 12px;
       color: #4364f7;
+      max-height: 200px;
+      overflow-y: auto;
       display: none;
     }
   </style>
@@ -174,7 +176,7 @@
     const database = firebase.database();
     let loggedInStudent = null;
     let attendanceTimer = null;
-    let currentActiveSession = null;
+    let currentActiveCode = null;
 
     // Utility functions
     function showMessage(elementId, message, type) {
@@ -195,8 +197,9 @@
     function debugLog(message, data = null) {
       console.log(message, data);
       const debugDiv = document.getElementById('debug-info');
-      debugDiv.innerHTML += `<div>${message} ${data ? JSON.stringify(data, null, 2) : ''}</div>`;
+      debugDiv.innerHTML += `<div><strong>${new Date().toLocaleTimeString()}</strong>: ${message} ${data ? JSON.stringify(data, null, 2) : ''}</div>`;
       debugDiv.style.display = 'block';
+      debugDiv.scrollTop = debugDiv.scrollHeight;
     }
 
     function getTodayDate() {
@@ -227,11 +230,13 @@
               loggedInStudent = {
                 enrollment: enrollment,
                 name: studentData.name || 'Student',
+                subject: studentData.subject,
                 ...studentData
               };
               
               showMessage('login-message', `Welcome ${loggedInStudent.name}! 🎉`, 'success');
               document.getElementById('attendance-section').style.display = 'block';
+              debugLog('Student logged in:', loggedInStudent);
               checkForActiveAttendance();
             } else {
               showMessage('login-message', 'Invalid password. Please try again.', 'error');
@@ -250,13 +255,13 @@
         });
     });
 
-    // UPDATED: Generalized attendance checking - ANY student can mark attendance
+    // FIXED: Check for active attendance codes (matching teacher.js structure)
     function checkForActiveAttendance() {
       if (!loggedInStudent) return;
 
       debugLog('Starting attendance check for student:', loggedInStudent.enrollment);
 
-      // Check for active attendance sessions across ALL subjects (generalized)
+      // Check ALL subjects for active attendance codes
       database.ref('subjects').once('value')
         .then(snapshot => {
           if (!snapshot.exists()) {
@@ -265,81 +270,89 @@
           }
 
           const subjects = snapshot.val();
-          let activeSessionFound = false;
+          let activeCodeFound = false;
 
-          // Look for ANY active session across all subjects
-          Object.keys(subjects).forEach(subjectName => {
-            const subject = subjects[subjectName];
-            const todayDate = getTodayDate();
+          debugLog('Found subjects:', Object.keys(subjects));
 
-            if (subject.attendance && subject.attendance[todayDate]) {
-              const todayAttendance = subject.attendance[todayDate];
+          // Look for active attendance codes in any subject
+          Object.keys(subjects).forEach(subjectKey => {
+            const subject = subjects[subjectKey];
+            
+            if (subject.attendanceCode) {
+              const { code, expiry } = subject.attendanceCode;
+              const now = Date.now();
               
-              // Check each session for today
-              Object.keys(todayAttendance).forEach(sessionId => {
-                const session = todayAttendance[sessionId];
-                
-                if (session.isActive) {
-                  activeSessionFound = true;
-                  currentActiveSession = {
-                    subjectName: subjectName,
-                    sessionId: sessionId,
-                    code: session.code,
-                    startTime: session.startTime,
-                    duration: session.duration || 300000 // Default 5 minutes
-                  };
+              debugLog(`Checking subject ${subjectKey}:`, { code, expiry, now, isActive: expiry > now });
+              
+              if (code && expiry && expiry > now) {
+                activeCodeFound = true;
+                currentActiveCode = {
+                  subjectKey: subjectKey,
+                  subjectName: subject.name,
+                  code: code,
+                  expiry: expiry
+                };
 
-                  debugLog('Found active session:', currentActiveSession);
-                  
-                  // Display session info
-                  document.getElementById('session-info').innerHTML = 
-                    `Active Session: <strong>${subjectName}</strong><br>Session ID: ${sessionId}`;
-                  document.getElementById('session-info').style.display = 'block';
-                  
-                  startAttendanceTimer();
-                  return; // Exit loops once we find an active session
-                }
-              });
+                debugLog('Found active attendance code:', currentActiveCode);
+                
+                // Display session info
+                document.getElementById('session-info').innerHTML = 
+                  `Active Session: <strong>${subject.name}</strong><br>Code expires in: <span id="countdown"></span>`;
+                document.getElementById('session-info').style.display = 'block';
+                
+                startAttendanceTimer();
+                return; // Exit loop once we find an active code
+              }
             }
           });
 
-          if (!activeSessionFound) {
-            showMessage('attendance-message', 'No active attendance sessions found. Please wait for teacher to start attendance.', 'info');
+          if (!activeCodeFound) {
+            showMessage('attendance-message', 'No active attendance sessions found. Please wait for teacher to generate attendance code.', 'info');
             document.getElementById('session-info').style.display = 'none';
             clearAttendanceTimer();
+            currentActiveCode = null;
+            debugLog('No active attendance codes found');
           }
         })
         .catch(error => {
           console.error('Error checking attendance:', error);
           showMessage('attendance-message', 'Error checking for active sessions.', 'error');
+          debugLog('Error checking attendance:', error);
         });
     }
 
     // Start attendance timer
     function startAttendanceTimer() {
-      if (!currentActiveSession) return;
+      if (!currentActiveCode) return;
 
       clearAttendanceTimer();
       
-      const startTime = currentActiveSession.startTime;
-      const duration = currentActiveSession.duration;
-      const endTime = startTime + duration;
-
       attendanceTimer = setInterval(() => {
         const now = Date.now();
-        const timeLeft = endTime - now;
+        const timeLeft = currentActiveCode.expiry - now;
 
         if (timeLeft <= 0) {
-          document.getElementById('attendance-timer').textContent = 'Session Expired';
+          document.getElementById('attendance-timer').textContent = '⏰ Session Expired';
+          document.getElementById('countdown').textContent = 'Expired';
           clearAttendanceTimer();
-          checkForActiveAttendance(); // Check for new sessions
+          setTimeout(() => {
+            checkForActiveAttendance(); // Check for new sessions
+          }, 2000);
           return;
         }
 
-        const minutes = Math.floor(timeLeft / 60000);
-        const seconds = Math.floor((timeLeft % 60000) / 1000);
-        document.getElementById('attendance-timer').textContent = 
-          `⏰ Time Left: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        const seconds = Math.floor(timeLeft / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        
+        const timeDisplay = minutes > 0 
+          ? `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
+          : `${remainingSeconds}s`;
+          
+        document.getElementById('attendance-timer').textContent = `⏰ Time Left: ${timeDisplay}`;
+        if (document.getElementById('countdown')) {
+          document.getElementById('countdown').textContent = timeDisplay;
+        }
       }, 1000);
     }
 
@@ -357,7 +370,7 @@
       const enteredCode = document.getElementById('attendance-code-input').value.trim().toUpperCase();
       const submitBtn = document.getElementById('submit-attendance-btn');
 
-      if (!currentActiveSession) {
+      if (!currentActiveCode) {
         showMessage('attendance-message', 'No active session found. Please refresh the page.', 'error');
         return;
       }
@@ -367,8 +380,16 @@
         return;
       }
 
-      if (enteredCode !== currentActiveSession.code) {
+      // Check if code is still valid
+      if (Date.now() > currentActiveCode.expiry) {
+        showMessage('attendance-message', 'Attendance code has expired. Please wait for a new code.', 'error');
+        checkForActiveAttendance(); // Refresh
+        return;
+      }
+
+      if (enteredCode !== currentActiveCode.code) {
         showMessage('attendance-message', 'Incorrect code. Please try again.', 'error');
+        debugLog('Code mismatch:', { entered: enteredCode, expected: currentActiveCode.code });
         return;
       }
 
@@ -376,27 +397,33 @@
       submitBtn.textContent = 'Submitting...';
       hideMessage('attendance-message');
 
-      const { subjectName, sessionId } = currentActiveSession;
+      const { subjectKey } = currentActiveCode;
       const todayDate = getTodayDate();
-      const attendanceRef = database.ref(`subjects/${subjectName}/attendance/${todayDate}/${sessionId}/students/${loggedInStudent.enrollment}`);
+      const attendanceRef = database.ref(`attendance/${subjectKey}/${todayDate}/${loggedInStudent.enrollment}`);
 
-      // Check if student already marked attendance for this session
+      debugLog('Submitting attendance:', { subjectKey, todayDate, enrollment: loggedInStudent.enrollment });
+
+      // Check if student already marked attendance today
       attendanceRef.once('value')
         .then(snapshot => {
           if (snapshot.exists()) {
-            showMessage('attendance-message', '✅ You have already marked attendance for this session!', 'info');
-            submitBtn.disabled = false;
-            submitBtn.textContent = '✓ Submit Attendance';
-            return;
+            const existingData = snapshot.val();
+            if (existingData.status === 'present') {
+              showMessage('attendance-message', '✅ You have already marked attendance today!', 'info');
+              debugLog('Already marked present today:', existingData);
+              return;
+            }
           }
 
-          // Mark attendance - ANY student can now mark attendance
+          // Mark attendance as present
           const attendanceData = {
-            name: loggedInStudent.name,
-            enrollment: loggedInStudent.enrollment,
+            status: 'present',
             timestamp: Date.now(),
-            status: 'present'
+            name: loggedInStudent.name,
+            code_used: currentActiveCode.code
           };
+
+          debugLog('Setting attendance data:', attendanceData);
 
           return attendanceRef.set(attendanceData);
         })
@@ -404,8 +431,9 @@
           if (arguments.length > 0) { // Only if set was called
             showMessage('attendance-message', '🎉 Attendance marked successfully!', 'success');
             document.getElementById('attendance-code-input').value = '';
+            debugLog('Attendance marked successfully');
             
-            // Optional: Hide attendance section after successful submission
+            // Hide attendance section after successful submission
             setTimeout(() => {
               document.getElementById('attendance-section').style.display = 'none';
             }, 3000);
@@ -414,6 +442,7 @@
         .catch(error => {
           console.error('Error submitting attendance:', error);
           showMessage('attendance-message', 'Failed to submit attendance. Please try again.', 'error');
+          debugLog('Error submitting attendance:', error);
         })
         .finally(() => {
           submitBtn.disabled = false;
@@ -421,12 +450,13 @@
         });
     });
 
-    // Auto-refresh attendance check every 30 seconds
+    // Auto-refresh attendance check every 10 seconds
     setInterval(() => {
-      if (loggedInStudent && !currentActiveSession) {
+      if (loggedInStudent && !currentActiveCode) {
+        debugLog('Auto-refreshing attendance check');
         checkForActiveAttendance();
       }
-    }, 30000);
+    }, 10000);
 
     // Allow Enter key for login
     document.getElementById('password-input').addEventListener('keypress', function(e) {
@@ -447,8 +477,8 @@
       e.target.value = e.target.value.toUpperCase();
     });
 
-    // Initialize debug mode (remove in production)
-    console.log('Student login system initialized');
+    // Initialize
+    console.log('Student login system initialized - Fixed for teacher.js compatibility');
   </script>
 </body>
 </html>
