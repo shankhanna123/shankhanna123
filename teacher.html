@@ -1,226 +1,662 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Teacher Dashboard</title>
+  <title>Teacher Dashboard - Enhanced</title>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link href="https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
   <style>
     :root {
-      --color-primary: #4364f7;
-      --color-secondary: #6fb1fc;
-      --color-bg: #f5f8fd;
-      --color-white: #fff;
-      --color-text: #232946;
-      --color-shadow: rgba(67, 100, 247, 0.08);
-      --radius: 18px;
-      --transition: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+      /* Enhanced Color Palette */
+      --color-primary: #4f46e5;
+      --color-secondary: #06b6d4;
+      --color-accent: #8b5cf6;
+      --color-success: #10b981;
+      --color-warning: #f59e0b;
+      --color-error: #ef4444;
+      --color-info: #3b82f6;
+      
+      /* Background & Surface Colors */
+      --color-bg: #0f172a;
+      --color-bg-secondary: #1e293b;
+      --color-surface: #334155;
+      --color-surface-hover: #475569;
+      --color-card: rgba(255, 255, 255, 0.08);
+      --color-card-hover: rgba(255, 255, 255, 0.12);
+      
+      /* Text Colors */
+      --color-text-primary: #f8fafc;
+      --color-text-secondary: #cbd5e1;
+      --color-text-muted: #94a3b8;
+      
+      /* Glass Effect */
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      
+      /* Border & Effects */
+      --border-radius: 16px;
+      --border-radius-lg: 24px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.15);
+      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.2);
     }
+
     * {
       box-sizing: border-box;
-    }
-    body {
-      font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
       padding: 0;
-      background: var(--color-bg);
-      color: var(--color-text);
-      min-height: 100vh;
     }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+      background-attachment: fixed;
+      color: var(--color-text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Animated Background Elements */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(79, 70, 229, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(6, 182, 212, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    /* Enhanced Header */
     header {
-      background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--glass-border);
+      padding: 20px 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow-md);
+    }
+
+    .header-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
       color: white;
-      padding: 32px 0 26px 0;
-      text-align: center;
-      box-shadow: 0 6px 28px var(--color-shadow);
-      border-bottom-left-radius: 40px;
-      border-bottom-right-radius: 40px;
+      font-weight: 700;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .current-time {
+      font-size: 0.9rem;
+      color: var(--color-text-secondary);
+      background: var(--glass-bg);
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--glass-border);
+    }
+
+    #sign-out-btn {
+      background: linear-gradient(135deg, var(--color-error), #dc2626);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      font-weight: 600;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.95rem;
+    }
+
+    #sign-out-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    /* Main Container */
+    main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 32px 24px;
+      display: grid;
+      gap: 32px;
+    }
+
+    /* Enhanced Cards */
+    .section {
+      background: var(--color-card);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--border-radius-lg);
+      padding: 32px;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--color-primary), var(--color-secondary), var(--color-accent));
+    }
+
+    .section:hover {
+      background: var(--color-card-hover);
+      transform: translateY(-4px);
+      box-shadow: var(--glass-shadow);
+    }
+
+    /* Section Headers */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--color-text-primary);
+    }
+
+    .section-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+
+    /* Enhanced Form Elements */
+    .form-group {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .input-container {
+      flex: 1;
+      min-width: 250px;
       position: relative;
     }
-    header h1 {
-      font-size: 2.5rem;
-      font-weight: 700;
-      letter-spacing: 1px;
-      margin: 0;
-      text-shadow: 0 2px 8px rgba(0,0,0,0.07);
-    }
-    #sign-out-btn {
-      position: absolute;
-      top: 38px;
-      right: 38px;
-      background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-secondary) 100%);
-      color: white;
-      border: none;
-      padding: 13px 32px;
-      font-size: 1.07rem;
-      border-radius: 9px;
-      cursor: pointer;
-      font-weight: 600;
-      box-shadow: 0 2px 12px var(--color-shadow);
-      margin: 0 4px 10px 0;
-      transition: background var(--transition), transform var(--transition);
-      outline: none;
-    }
-    #sign-out-btn:hover, #sign-out-btn:focus {
-      background: linear-gradient(90deg, #3350b7 0%, #5191e1 100%);
-      transform: translateY(-2px) scale(1.03);
-    }
-    main {
-      padding: 42px 18px 32px 18px;
-      max-width: 1100px;
-      margin: auto;
-    }
-    .section {
-      background: var(--color-white);
-      border-radius: var(--radius);
-      padding: 36px 32px 32px 32px;
-      margin-bottom: 38px;
-      box-shadow: 0 8px 28px var(--color-shadow), 0 1.5px 5px rgba(100,150,255,0.03);
-      transition: box-shadow var(--transition);
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-    }
-    .section:hover {
-      box-shadow: 0 14px 36px rgba(67, 100, 247, 0.13), 0 2px 8px rgba(100,150,255,0.07);
-    }
-    h2, h3, h4 {
-      color: var(--color-primary);
-      margin-top: 0;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-    }
-    input[type="text"] {
-      padding: 13px 16px;
-      border: 1px solid #dbdbdb;
-      border-radius: 8px;
-      font-size: 1.1rem;
-      width: 100%;
-      max-width: 350px;
-      margin-right: 12px;
+
+    .input-label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--color-text-secondary);
       margin-bottom: 8px;
-      transition: border-color var(--transition), box-shadow var(--transition);
-      background: #f7faff;
-      color: #232946;
-      outline: none;
     }
-    input[type="text"]:focus {
-      border-color: var(--color-primary);
-      box-shadow: 0 0 0 2px #e0e8ff;
-    }
-    button, #add-subject-btn {
-      background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-secondary) 100%);
-      color: white;
-      border: none;
-      padding: 12px 28px;
-      font-size: 1rem;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-      box-shadow: 0 2px 12px var(--color-shadow);
-      transition: background var(--transition), transform var(--transition);
-      margin-top: 4px;
-      margin-bottom: 2px;
-    }
-    button:hover, #add-subject-btn:hover {
-      background: linear-gradient(90deg, #3350b7 0%, #5191e1 100%);
-      transform: translateY(-2px) scale(1.02);
-    }
-    #subjects-container {
+
+    input[type="text"] {
       width: 100%;
+      padding: 16px 20px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--border-radius);
+      color: var(--color-text-primary);
+      font-size: 1rem;
+      transition: var(--transition);
+      backdrop-filter: blur(10px);
     }
-    /* Responsive styles */
-    @media (max-width: 900px) {
-      main {
-        padding: 28px 4vw 20px 4vw;
-        max-width: 98vw;
-      }
-      .section {
-        padding: 24px 10px 18px 10px;
-        margin-bottom: 22px;
-        border-radius: 14px;
-      }
-      header h1 {
-        font-size: 2rem;
-      }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+      background: rgba(79, 70, 229, 0.05);
     }
-    @media (max-width: 600px) {
-      header {
-        padding: 22px 0 16px 0;
-        border-bottom-left-radius: 16px;
-        border-bottom-right-radius: 16px;
-      }
-      header h1 {
-        font-size: 1.3rem;
-      }
-      #sign-out-btn {
-        top: 10px;
-        right: 10px;
-        padding: 8px 16px;
-        font-size: 0.92rem;
-      }
-      main {
-        padding: 8px 2vw 8px 2vw;
-        max-width: 100vw;
-      }
-      .section {
-        padding: 12px 4px 10px 4px;
-        margin-bottom: 14px;
-        border-radius: 8px;
-      }
-      input[type="text"], button, #add-subject-btn {
-        width: 100%;
-        max-width: 100%;
-        font-size: 1rem;
-        margin-bottom: 10px;
-        margin-right: 0;
-      }
+
+    input[type="text"]::placeholder {
+      color: var(--color-text-muted);
     }
-    /* Table responsiveness */
-    .section table {
+
+    /* Enhanced Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border: none;
+      border-radius: var(--border-radius);
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+      white-space: nowrap;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      transition: left 0.6s;
+    }
+
+    .btn:hover::before {
+      left: 100%;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+      color: white;
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, var(--color-success), #059669);
+      color: white;
+    }
+
+    .btn-warning {
+      background: linear-gradient(135deg, var(--color-warning), #d97706);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: var(--color-surface);
+      color: var(--color-text-primary);
+      border: 1px solid var(--glass-border);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--border-radius);
+      padding: 20px;
+      text-align: center;
+      transition: var(--transition);
+    }
+
+    .stat-card:hover {
+      background: var(--color-card-hover);
+      transform: scale(1.05);
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      color: var(--color-text-secondary);
+      margin-top: 4px;
+    }
+
+    /* Enhanced Tables */
+    .table-container {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--border-radius);
+      overflow: hidden;
+      margin-top: 20px;
+    }
+
+    table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 8px;
-      background: #f9fbff;
-      border-radius: 6px;
-      overflow: auto;
-      font-size: 1rem;
     }
-    .section th, .section td {
-      padding: 10px 8px;
-      border-bottom: 1px solid #e6e6e6;
+
+    th, td {
+      padding: 16px 20px;
+      text-align: left;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    th {
+      background: var(--color-surface);
+      font-weight: 600;
+      color: var(--color-text-primary);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    tr:hover {
+      background: var(--color-card-hover);
+    }
+
+    /* Attendance Code Display */
+    .attendance-code-display {
+      background: linear-gradient(135deg, var(--color-success), #059669);
+      color: white;
+      padding: 24px;
+      border-radius: var(--border-radius);
       text-align: center;
+      margin: 20px 0;
+      position: relative;
+      overflow: hidden;
     }
-    .section th {
-      background: #ebf1ff;
-      color: var(--color-primary);
-      font-weight: 700;
+
+    .attendance-code-display::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(255, 255, 255, 0.05) 10px,
+        rgba(255, 255, 255, 0.05) 20px
+      );
+      animation: shimmer 3s linear infinite;
     }
-    @media (max-width: 600px) {
-      .section table, .section thead, .section tbody, .section th, .section td, .section tr {
-        display: block;
+
+    @keyframes shimmer {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    .code-value {
+      font-size: 3rem;
+      font-weight: 800;
+      letter-spacing: 8px;
+      margin: 8px 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .code-timer {
+      font-size: 1.2rem;
+      font-weight: 600;
+      opacity: 0.9;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Copy Button */
+    .copy-btn {
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      margin-top: 12px;
+      transition: var(--transition);
+    }
+
+    .copy-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Loading States */
+    .loading {
+      opacity: 0.7;
+      pointer-events: none;
+      position: relative;
+    }
+
+    .loading::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20px;
+      height: 20px;
+      margin: -10px 0 0 -10px;
+      border: 2px solid transparent;
+      border-top: 2px solid var(--color-primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Animations */
+    .fade-in {
+      animation: fadeIn 0.6s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
       }
-      .section tr {
-        margin-bottom: 12px;
-      }
-      .section td, .section th {
-        text-align: left;
-        padding: 8px 4px;
-        border: none;
-        border-bottom: 1px solid #f1f1f1;
-      }
-      .section th {
-        background: #ebf1ff;
+      to {
+        opacity: 1;
+        transform: translateY(0);
       }
     }
-    /* Scrollbar styles for webkit browsers */
+
+    .slide-in {
+      animation: slideIn 0.4s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+      main {
+        padding: 24px 16px;
+      }
+      
+      .section {
+        padding: 24px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .header-container {
+        padding: 0 16px;
+        flex-direction: column;
+        gap: 16px;
+      }
+      
+      .header-left {
+        order: 1;
+      }
+      
+      .header-right {
+        order: 2;
+        flex-direction: column;
+        width: 100%;
+        align-items: stretch;
+      }
+      
+      .current-time {
+        text-align: center;
+      }
+      
+      header h1 {
+        font-size: 1.5rem;
+      }
+      
+      .form-group {
+        flex-direction: column;
+      }
+      
+      .input-container {
+        min-width: 100%;
+      }
+      
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .code-value {
+        font-size: 2rem;
+        letter-spacing: 4px;
+      }
+      
+      .table-container {
+        overflow-x: auto;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .section {
+        padding: 16px;
+      }
+      
+      .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+    }
+
+    /* Custom Scrollbar */
     ::-webkit-scrollbar {
-      width: 7px;
-      background: #e3eeff;
+      width: 8px;
+      height: 8px;
     }
+
+    ::-webkit-scrollbar-track {
+      background: var(--color-bg-secondary);
+    }
+
     ::-webkit-scrollbar-thumb {
-      background: var(--color-primary);
-      border-radius: 5px;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(135deg, var(--color-secondary), var(--color-accent));
+    }
+
+    /* Notification Toast */
+    .toast {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      padding: 16px 24px;
+      border-radius: var(--border-radius);
+      color: var(--color-text-primary);
+      box-shadow: var(--shadow-lg);
+      z-index: 1000;
+      transform: translateX(400px);
+      transition: var(--transition);
+    }
+
+    .toast.show {
+      transform: translateX(0);
+    }
+
+    .toast.success {
+      border-left: 4px solid var(--color-success);
+    }
+
+    .toast.error {
+      border-left: 4px solid var(--color-error);
+    }
+
+    .toast.warning {
+      border-left: 4px solid var(--color-warning);
+    }
+
+    .toast.info {
+      border-left: 4px solid var(--color-info);
     }
   </style>
 </head>
@@ -247,40 +683,229 @@
       }
     });
   </script>
+
   <header>
-    <h1>Teacher Dashboard</h1>
-    <button id="sign-out-btn">Sign Out</button>
-  </header>
-  <main>
-    <div class="section">
-      <h2>Add New Subject</h2>
-      <input type="text" id="subject-name" placeholder="Enter Subject Name" />
-      <button id="add-subject-btn">Add Subject</button>
+    <div class="header-container">
+      <div class="header-left">
+        <div class="logo">
+          <i class="fas fa-graduation-cap"></i>
+        </div>
+        <h1>Teacher Dashboard</h1>
+      </div>
+      <div class="header-right">
+        <div class="current-time" id="current-time">
+          <i class="fas fa-clock"></i>
+          <span id="time-display">--:--</span>
+        </div>
+        <button id="sign-out-btn" class="btn">
+          <i class="fas fa-sign-out-alt"></i>
+          Sign Out
+        </button>
+      </div>
     </div>
-    <div class="section">
-      <h2>Your Subjects</h2>
+  </header>
+
+  <main>
+    <!-- Add New Subject Section -->
+    <div class="section fade-in">
+      <div class="section-header">
+        <div class="section-title">
+          <div class="section-icon">
+            <i class="fas fa-plus"></i>
+          </div>
+          Add New Subject
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <div class="input-container">
+          <label class="input-label" for="subject-name">Subject Name</label>
+          <input type="text" id="subject-name" placeholder="Enter subject name (e.g., Mathematics, Physics)" />
+        </div>
+        <button id="add-subject-btn" class="btn btn-primary">
+          <i class="fas fa-plus"></i>
+          Add Subject
+        </button>
+      </div>
+    </div>
+
+    <!-- Dashboard Stats -->
+    <div class="section fade-in">
+      <div class="section-header">
+        <div class="section-title">
+          <div class="section-icon">
+            <i class="fas fa-chart-bar"></i>
+          </div>
+          Dashboard Overview
+        </div>
+      </div>
+      
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="total-subjects">0</div>
+          <div class="stat-label">Total Subjects</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="total-students">0</div>
+          <div class="stat-label">Total Students</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="active-sessions">0</div>
+          <div class="stat-label">Active Sessions</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="today-attendance">0</div>
+          <div class="stat-label">Today's Attendance</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Your Subjects Section -->
+    <div class="section fade-in">
+      <div class="section-header">
+        <div class="section-title">
+          <div class="section-icon">
+            <i class="fas fa-book"></i>
+          </div>
+          Your Subjects
+        </div>
+        <button class="btn btn-secondary" onclick="refreshSubjects()">
+          <i class="fas fa-refresh"></i>
+          Refresh
+        </button>
+      </div>
+      
       <div id="subjects-container">
         <!-- Subject sections added dynamically -->
       </div>
     </div>
   </main>
-  <!-- Firebase App (the core Firebase SDK) -->
-  <!-- scripts above already loaded for auth check, so these are optional duplicates but harmless -->
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast"></div>
+
+  <!-- Firebase Database -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  <!-- jsPDF for PDF export -->
+  
+  <!-- PDF and Excel Export Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <!-- SheetJS for Excel export -->
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  
+  <!-- Teacher Logic -->
   <script src="teacher.js"></script>
+  
+  <!-- Enhanced UI Scripts -->
   <script>
-    // Sign out logic
-    document.getElementById('sign-out-btn').onclick = function() {
-      firebase.auth().signOut().then(function() {
-        window.location.href = "teacher-login.html";
-      }).catch(function(error) {
-        alert("Error signing out: " + error.message);
+    // Toast notification system
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = `toast ${type}`;
+      toast.classList.add('show');
+      
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 4000);
+    }
+
+    // Real-time clock
+    function updateTime() {
+      const now = new Date();
+      const timeString = now.toLocaleTimeString('en-US', {
+        hour12: true,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
       });
+      const dateString = now.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric'
+      });
+      
+      document.getElementById('time-display').textContent = `${dateString} ${timeString}`;
+    }
+
+    // Start clock
+    updateTime();
+    setInterval(updateTime, 1000);
+
+    // Enhanced copy to clipboard function
+    function copyToClipboard(text, element) {
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = element.innerHTML;
+        element.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        element.style.background = 'rgba(16, 185, 129, 0.3)';
+        
+        setTimeout(() => {
+          element.innerHTML = originalText;
+          element.style.background = '';
+        }, 2000);
+        
+        showToast('Code copied to clipboard!', 'success');
+      }).catch(err => {
+        showToast('Failed to copy code', 'error');
+      });
+    }
+
+    // Refresh subjects function
+    function refreshSubjects() {
+      showToast('Refreshing subjects...', 'info');
+      // This will be handled by your existing teacher.js logic
+      location.reload();
+    }
+
+    // Update dashboard stats (to be called by teacher.js)
+    function updateDashboardStats(stats) {
+      document.getElementById('total-subjects').textContent = stats.subjects || 0;
+      document.getElementById('total-students').textContent = stats.students || 0;
+      document.getElementById('active-sessions').textContent = stats.activeSessions || 0;
+      document.getElementById('today-attendance').textContent = stats.todayAttendance || 0;
+    }
+
+    // Enhanced sign out with confirmation
+    document.getElementById('sign-out-btn').onclick = function() {
+      if (confirm('Are you sure you want to sign out?')) {
+        this.classList.add('loading');
+        firebase.auth().signOut().then(function() {
+          showToast('Signed out successfully', 'success');
+          setTimeout(() => {
+            window.location.href = "teacher-login.html";
+          }, 1000);
+        }).catch(function(error) {
+          showToast("Error signing out: " + error.message, 'error');
+          document.getElementById('sign-out-btn').classList.remove('loading');
+        });
+      }
     };
+
+    // Add loading states for form submission
+    document.getElementById('add-subject-btn').addEventListener('click', function() {
+      const input = document.getElementById('subject-name');
+      if (input.value.trim()) {
+        this.classList.add('loading');
+        this.disabled = true;
+      }
+    });
+
+    // Enhanced keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+      // Ctrl/Cmd + R to refresh subjects
+      if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+        e.preventDefault();
+        refreshSubjects();
+      }
+      
+      // Enter key to add subject
+      if (e.key === 'Enter' && document.activeElement.id === 'subject-name') {
+        document.getElementById('add-subject-btn').click();
+      }
+    });
+
+    // Add smooth scroll behavior
+    document.documentElement.style.scrollBehavior = 'smooth';
+
+    console.log('Enhanced Teacher Dashboard UI loaded successfully! 🚀');
   </script>
 </body>
 </html>
