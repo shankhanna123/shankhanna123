@@ -502,65 +502,85 @@ function setupExportLogic(section, subjectKey, subjectName) {
   };
 }
 
-// **COMPLETELY FIXED EXPORT FUNCTION** 🔧
+// **COMPLETELY FIXED EXPORT FUNCTION FOR GENERALIZED ATTENDANCE** 🔧
 async function exportAttendanceData(subjectKey, subjectName, type, buttonElement) {
-  console.log(`📊 Starting export for subject: ${subjectName} (${subjectKey}) as ${type.toUpperCase()}`);
+  console.log(`📊 Starting generalized export for subject: ${subjectName} (${subjectKey}) as ${type.toUpperCase()}`);
   
   try {
     // Set loading state
     setLoadingState(buttonElement, true, `Export as ${type.toUpperCase()}`);
     showToast(`🔄 Preparing ${type.toUpperCase()} export for ${subjectName}...`, 'info');
     
-    // Step 1: Get all students
-    console.log('📖 Step 1: Fetching students...');
-    const studentsSnapshot = await db.ref(`subjects/${subjectKey}/students`).once('value');
-    const students = studentsSnapshot.val();
-    
-    if (!students || Object.keys(students).length === 0) {
-      throw new Error('No students found in this subject. Please add students first.');
-    }
-    
-    const studentsList = Object.keys(students);
-    console.log(`👥 Found ${studentsList.length} students:`, studentsList);
-    
-    // Step 2: Get all attendance data
-    console.log('📈 Step 2: Fetching attendance data...');
+    // Step 1: Get all attendance data first (this includes all students who marked attendance)
+    console.log('📈 Step 1: Fetching attendance data...');
     const attendanceSnapshot = await db.ref(`attendance/${subjectKey}`).once('value');
     const attendanceData = attendanceSnapshot.val();
     
     console.log('📊 Raw attendance data:', attendanceData);
     
     if (!attendanceData || Object.keys(attendanceData).length === 0) {
-      console.log('⚠️ No attendance records found, creating export with "No Record" entries');
-      
-      // Create export with "No Record" for all students
-      const headerRow = ["Enrollment No.", "Name", "Class", "Gender", "Status"];
-      const rows = studentsList.map(enroll => {
-        const student = students[enroll];
-        return [
-          enroll,
-          student.name || 'N/A',
-          student.class || 'N/A',
-          student.gender || 'N/A',
-          'No attendance records found'
-        ];
-      });
-      
-      await performExport(type, subjectName, headerRow, rows);
-      showToast(`✅ Export completed! Note: No attendance records found for ${subjectName}`, 'warning');
-      return;
+      throw new Error('No attendance records found for this subject. Generate attendance codes and have students mark attendance first.');
     }
     
-    // Step 3: Process attendance data
+    // Step 2: Extract all unique student enrollment numbers from attendance data
+    const allStudentEnrollments = new Set();
     const dates = Object.keys(attendanceData).sort(); // Sort dates chronologically
+    
+    dates.forEach(date => {
+      const dayAttendance = attendanceData[date];
+      if (dayAttendance) {
+        Object.keys(dayAttendance).forEach(enrollment => {
+          allStudentEnrollments.add(enrollment);
+        });
+      }
+    });
+    
+    const studentsList = Array.from(allStudentEnrollments);
+    console.log(`👥 Found ${studentsList.length} students who have attendance records:`, studentsList);
+    
+    if (studentsList.length === 0) {
+      throw new Error('No students found with attendance records.');
+    }
+    
+    // Step 3: Get student information from multiple sources
+    console.log('📖 Step 3: Fetching student information...');
+    const studentsInfo = {};
+    
+    // First, try to get from subjects/{subjectKey}/students
+    const subjectStudentsSnapshot = await db.ref(`subjects/${subjectKey}/students`).once('value');
+    const subjectStudents = subjectStudentsSnapshot.val() || {};
+    
+    // Then, get from global students registry
+    const globalStudentsSnapshot = await db.ref(`students`).once('value');
+    const globalStudents = globalStudentsSnapshot.val() || {};
+    
+    // Build comprehensive student info
+    studentsList.forEach(enrollment => {
+      if (subjectStudents[enrollment]) {
+        // Student info from subject-specific record
+        studentsInfo[enrollment] = subjectStudents[enrollment];
+      } else if (globalStudents[enrollment]) {
+        // Student info from global registry
+        studentsInfo[enrollment] = globalStudents[enrollment];
+      } else {
+        // Default info for students we don't have details for
+        studentsInfo[enrollment] = {
+          name: `Student ${enrollment}`,
+          class: 'N/A',
+          gender: 'N/A',
+          cast: 'N/A'
+        };
+      }
+    });
+    
     console.log(`📅 Found attendance for ${dates.length} dates:`, dates);
     
     // Step 4: Build export data
-    console.log('🔨 Step 4: Building export data...');
+    console.log('🔨 Step 4: Building generalized export data...');
     const headerRow = ["Enrollment No.", "Name", "Class", "Gender", ...dates, "Total Present", "Attendance %"];
     
     const rows = studentsList.map(enroll => {
-      const student = students[enroll];
+      const student = studentsInfo[enroll];
       const attendanceRecord = [];
       let presentCount = 0;
       let totalClasses = dates.length;
@@ -599,13 +619,13 @@ async function exportAttendanceData(subjectKey, subjectName, type, buttonElement
     });
     
     // Step 5: Export the data
-    console.log('💾 Step 5: Exporting data...');
+    console.log('💾 Step 5: Exporting generalized attendance data...');
     await performExport(type, subjectName, headerRow, rows);
     
     const totalRecords = dates.length * studentsList.length;
     showToast(`✅ ${type.toUpperCase()} export completed! ${studentsList.length} students across ${dates.length} dates (${totalRecords} total records)`, 'success');
     
-    console.log(`✅ Export completed successfully for ${subjectName}`);
+    console.log(`✅ Generalized export completed successfully for ${subjectName}`);
     
   } catch (error) {
     console.error(`❌ Export failed for ${subjectName}:`, error);
@@ -893,7 +913,7 @@ function loadStudents(section, subjectKey) {
       headerElement.innerHTML = `<i class="fas fa-users"></i> Students (${studentsList.length})`;
       
       if (studentsList.length === 0) {
-        studentListBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: #666;"><i class="fas fa-user-plus"></i><br>No students added yet.<br><small>Click "Add Student" to get started!</small></td></tr>';
+        studentListBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: #666;"><i class="fas fa-user-plus"></i><br>No students added yet.<br><small>Click "Add Student" above to add students.</small></td></tr>';
         return;
       }
       
@@ -1042,7 +1062,7 @@ window.addEventListener('load', function() {
   loadSubjects();
   
   console.log('✅ Teacher Dashboard loaded successfully!');
-  console.log('🎯 Enhanced features: Export fix, error handling, loading states, better UX');
+  console.log('🎯 Enhanced features: GENERALIZED ATTENDANCE EXPORT, error handling, loading states, better UX');
 });
 
 // Error handling for uncaught errors
@@ -1058,6 +1078,6 @@ window.addEventListener('unhandledrejection', function(e) {
 });
 
 console.log('🎉 Enhanced Teacher Dashboard Script Loaded Successfully!');
-console.log('🔧 Key fixes: Export functionality, error handling, loading states, data validation');
-console.log('📊 Export features: PDF & Excel with comprehensive attendance data');
-console.log('✅ UPDATED: Removed student count validation - attendance codes can now be generated regardless of student enrollment');
+console.log('🔧 Key fixes: GENERALIZED ATTENDANCE EXPORT, error handling, loading states, data validation');
+console.log('📊 Export features: PDF & Excel with comprehensive attendance data for ALL students who mark attendance');
+console.log('✅ SOLUTION: Export now includes students from register.html + students added via Add Student form');
