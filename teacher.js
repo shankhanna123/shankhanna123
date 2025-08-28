@@ -364,13 +364,11 @@ function setupAttendanceCodeLogic(section, subjectKey) {
       const students = studentsSnap.val() || {};
       const studentCount = Object.keys(students).length;
       
-      if (studentCount === 0) {
-        showToast('⚠️ No students found in this subject. Add students first.', 'warning');
-        setLoadingState(generateCodeBtn, false);
-        return;
-      }
+
       
-      console.log(`👥 Setting initial absent status for ${studentCount} students`);
+      console.log(studentCount === 0 
+        ? `👥 No students in subject - attendance code generated for future use` 
+        : `👥 Setting initial absent status for ${studentCount} students`);
       
       // Initialize all students as absent for today
       const attendanceUpdates = {};
@@ -393,7 +391,9 @@ function setupAttendanceCodeLogic(section, subjectKey) {
       // Apply all updates atomically
       await db.ref().update(attendanceUpdates);
       
-      showToast(`✅ Attendance code generated! ${studentCount} students marked as absent initially.`, 'success');
+      showToast(studentCount === 0 
+        ? '✅ Attendance code generated! Ready for students to join.' 
+        : `✅ Attendance code generated! ${studentCount} students marked as absent initially.`, 'success');
       console.log(`✅ Attendance code ${code} generated successfully for ${studentCount} students`);
       
     } catch (error) {
