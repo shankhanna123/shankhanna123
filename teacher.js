@@ -364,25 +364,33 @@ function setupAttendanceCodeLogic(section, subjectKey) {
       const students = studentsSnap.val() || {};
       const studentCount = Object.keys(students).length;
       
-      if (studentCount === 0) {
-        showToast('⚠️ No students found in this subject. Add students first.', 'warning');
-        setLoadingState(generateCodeBtn, false);
-        return;
+      // REMOVED: Student count validation - now allows code generation regardless of student count
+      // if (studentCount === 0) {
+      //   showToast('⚠️ No students found in this subject. Add students first.', 'warning');
+      //   setLoadingState(generateCodeBtn, false);
+      //   return;
+      // }
+      
+      console.log(`👥 Found ${studentCount} students in subject ${subjectKey}`);
+      
+      // Initialize attendance updates object
+      const attendanceUpdates = {};
+      
+      // Initialize all students as absent for today (only if students exist)
+      if (studentCount > 0) {
+        console.log(`👥 Setting initial absent status for ${studentCount} students`);
+        Object.keys(students).forEach(enroll => {
+          attendanceUpdates[`attendance/${subjectKey}/${todayDate}/${enroll}`] = { 
+            status: "absent",
+            timestamp: Date.now(),
+            codeGenerated: code
+          };
+        });
+      } else {
+        console.log('📝 No students found - skipping attendance initialization');
       }
       
-      console.log(`👥 Setting initial absent status for ${studentCount} students`);
-      
-      // Initialize all students as absent for today
-      const attendanceUpdates = {};
-      Object.keys(students).forEach(enroll => {
-        attendanceUpdates[`attendance/${subjectKey}/${todayDate}/${enroll}`] = { 
-          status: "absent",
-          timestamp: Date.now(),
-          codeGenerated: code
-        };
-      });
-      
-      // Set attendance code
+      // Set attendance code (always generated regardless of student count)
       attendanceUpdates[`subjects/${subjectKey}/attendanceCode`] = {
         code: code,
         expiry: expiry,
@@ -393,8 +401,13 @@ function setupAttendanceCodeLogic(section, subjectKey) {
       // Apply all updates atomically
       await db.ref().update(attendanceUpdates);
       
-      showToast(`✅ Attendance code generated! ${studentCount} students marked as absent initially.`, 'success');
-      console.log(`✅ Attendance code ${code} generated successfully for ${studentCount} students`);
+      if (studentCount > 0) {
+        showToast(`✅ Attendance code generated! ${studentCount} students marked as absent initially.`, 'success');
+        console.log(`✅ Attendance code ${code} generated successfully for ${studentCount} students`);
+      } else {
+        showToast(`✅ Attendance code generated! No students enrolled yet - code is ready for future use.`, 'success');
+        console.log(`✅ Attendance code ${code} generated successfully (no students enrolled)`);
+      }
       
     } catch (error) {
       console.error('❌ Error generating attendance code:', error);
@@ -1047,3 +1060,4 @@ window.addEventListener('unhandledrejection', function(e) {
 console.log('🎉 Enhanced Teacher Dashboard Script Loaded Successfully!');
 console.log('🔧 Key fixes: Export functionality, error handling, loading states, data validation');
 console.log('📊 Export features: PDF & Excel with comprehensive attendance data');
+console.log('✅ UPDATED: Removed student count validation - attendance codes can now be generated regardless of student enrollment');
